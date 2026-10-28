@@ -30,6 +30,82 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"Safe stop: virtual output removed, preview mode.", "Parada segura: saída virtual removida, modo de pré-visualização."},
     {"Profile: ", "Perfil: "},
 
+    {"Aim lab", "Laboratório de mira"},
+
+    // ---- platform strings shown in the UI (system_probe, win_util, xinput, rawinput)
+    {"Upgrade Aim compatibility report", "Relatório de compatibilidade do Upgrade Aim"},
+    {"Generated ", "Gerado em "},
+    {"Automatically detected facts and user-recorded checklist results. Checklist entries marked Untested were not tested.",
+     "Fatos detectados automaticamente e resultados do checklist anotados pelo usuário. Itens marcados como Não testado não "
+     "foram testados."},
+    {"HID interfaces", "Interfaces HID"},
+    {"Drivers", "Drivers"},
+    {"Manual checklist (user results)", "Checklist manual (resultados do usuário)"},
+    {"not installed", "não instalado"},
+    {"starting", "iniciando"},
+    {"stopping", "parando"},
+    {"installed (status unavailable)", "instalado (estado indisponível)"},
+    {"Xbox app / Microsoft Store", "App Xbox / Microsoft Store"},
+    {"no Steam registry keys found", "nenhuma chave do Steam no registro"},
+    {"Uninstall\\Battle.net registry entry", "entrada Uninstall\\Battle.net no registro"},
+    {"no Battle.net registry keys found", "nenhuma chave do Battle.net no registro"},
+    {"Microsoft.GamingApp package registered for this user", "pacote Microsoft.GamingApp registrado para este usuário"},
+    {"Microsoft.GamingApp package not found", "pacote Microsoft.GamingApp não encontrado"},
+    {"Steam Input is configured per game (Game > Properties > Controller). When enabled it reads the physical controller "
+     "itself and presents its own virtual controller to the game.",
+     "O Steam Input é configurado por jogo (Jogo > Propriedades > Controle). Quando ligado, ele mesmo lê o controle físico e "
+     "apresenta ao jogo um controle virtual próprio."},
+    {"Steam Input can also pick up the Upgrade Aim virtual Xbox 360 pad. Test with Steam Input both enabled and disabled for "
+     "the game and record which controller the game reacts to.",
+     "O Steam Input também pode capturar o controle Xbox 360 virtual do Upgrade Aim. Teste com o Steam Input ligado e desligado "
+     "para o jogo e anote a qual controle o jogo responde."},
+    {"If Steam Input is enabled, its own deadzones/curves stack on top of Upgrade Aim processing.",
+     "Com o Steam Input ligado, as deadzones e curvas dele se somam ao processamento do Upgrade Aim."},
+    {"Battle.net does not remap controllers itself; the game reads controllers directly.",
+     "O Battle.net não remapeia controles; o jogo lê os controles diretamente."},
+    {"Record whether the game sees the physical pad, the virtual pad, or both (double input).",
+     "Anote se o jogo vê o controle físico, o virtual ou os dois (entrada dupla)."},
+    {"Store/Game Pass builds read controllers through XInput/GameInput like other PC builds.",
+     "As versões da Store/Game Pass leem os controles por XInput/GameInput, como as outras versões de PC."},
+    {"Store games run in a container; verify the virtual pad is visible to the game, not only to the Xbox app.",
+     "Os jogos da Store rodam num contêiner; confirme que o controle virtual aparece para o jogo, e não só para o app Xbox."},
+    {"MMCSS 'Games' task, high priority", "tarefa MMCSS 'Games', prioridade alta"},
+    {"THREAD_PRIORITY_HIGHEST", "THREAD_PRIORITY_HIGHEST"},
+    {"gamepad", "gamepad"},
+    {"arcade stick", "arcade stick"},
+    {"flight stick", "manche"},
+    {"dance pad", "tapete de dança"},
+    {"guitar", "guitarra"},
+    {"drum kit", "bateria"},
+    {"arcade pad", "arcade pad"},
+    {"unknown", "desconhecido"},
+    {"mouse", "mouse"},
+    {"joystick", "joystick"},
+    {"keyboard", "teclado"},
+    {"multi-axis controller", "controle multieixo"},
+    {"system control", "controle de sistema"},
+    {"consumer control", "controle de mídia"},
+    {"xusb22 (Microsoft Xbox 360 driver)", "xusb22 (driver Xbox 360 da Microsoft)"},
+
+    // ---- synthetic test names and descriptions (analysis.cpp)
+    {"rest_noise", "ruído em repouso"},
+    {"slow_drift", "drift lento"},
+    {"step_50", "degrau 50 %"},
+    {"step_100", "degrau 100 %"},
+    {"tracking_1hz", "rastreio 1 Hz"},
+    {"micro_adjust", "microajuste"},
+    {"flick_left", "flick à esquerda"},
+    {"full_circle", "círculo completo"},
+    {"Untouched stick with sensor noise and a small off-center rest",
+     "Analógico parado, com ruído do sensor e centro levemente deslocado"},
+    {"Rest position drifting 0.02/s along +X", "Posição de repouso derivando 0,02/s no sentido +X"},
+    {"Instant 50% deflection (latency added by processing)", "Deflexão instantânea de 50 % (atraso adicionado pelo processamento)"},
+    {"Instant full deflection", "Deflexão total instantânea"},
+    {"Smooth 1 Hz horizontal tracking at 35% deflection", "Rastreio horizontal suave a 1 Hz com 35 % de deflexão"},
+    {"Small corrections (<=12% deflection) with noise", "Correções pequenas (até 12 % de deflexão) com ruído"},
+    {"80 ms full-deflection flick to the left", "Flick de 80 ms com deflexão total para a esquerda"},
+    {"Stick rotated around the rim at 1 rev/s", "Analógico girando na borda a 1 volta/s"},
+
     // ---- engine states (sa::toString)
     {"running", "rodando"},
     {"stopped", "parado"},
@@ -41,7 +117,7 @@ const std::pair<const char*, const char*> kPtBr[] = {
      "O jogo responde ao controle físico (Steam Input DESLIGADO para o jogo)"},
     {"Game reacts to the physical controller (Steam Input ON for the game)",
      "O jogo responde ao controle físico (Steam Input LIGADO para o jogo)"},
-    {"Game reacts to the StickyAim virtual pad", "O jogo responde ao controle virtual do StickyAim"},
+    {"Game reacts to the Upgrade Aim virtual pad", "O jogo responde ao controle virtual do Upgrade Aim"},
     {"No double input while the virtual pad is active", "Sem entrada dupla com o controle virtual ativo"},
     {"Rumble reaches the physical controller", "A vibração chega ao controle físico"},
     {"Game reacts to the physical controller", "O jogo responde ao controle físico"},
@@ -71,9 +147,9 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"Needed for", "Necessário para"},
     {"Notes", "Notas"},
     {"Drivers and privileges", "Drivers e permissões"},
-    {"StickyAim never installs drivers or changes security settings. Install third-party drivers yourself only after "
+    {"Upgrade Aim never installs drivers or changes security settings. Install third-party drivers yourself only after "
      "reading docs/DELIVERY.md.",
-     "O StickyAim nunca instala drivers nem altera configurações de segurança. Instale drivers de terceiros você mesmo, e só "
+     "O Upgrade Aim nunca instala drivers nem altera configurações de segurança. Instale drivers de terceiros você mesmo, e só "
      "depois de ler docs/DELIVERY.md."},
     {"Launcher", "Launcher"},
     {"Installed", "Instalado"},
@@ -91,7 +167,7 @@ const std::pair<const char*, const char*> kPtBr[] = {
      "configurações."},
     {"Export compatibility report", "Exportar relatório de compatibilidade"},
     {"Export", "Exportar"},
-    {"StickyAim input source", "Entrada usada pelo StickyAim"},
+    {"Upgrade Aim input source", "Entrada usada pelo Upgrade Aim"},
     {"XInput HID view", "Visão HID do XInput"},
     {"ViGEmBus driver", "Driver ViGEmBus"},
     {"Virtual controller output (optional)", "Saída para controle virtual (opcional)"},
@@ -107,9 +183,9 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"Virtual output", "Saída virtual"},
     {"Build option STICKYAIM_WITH_VIGEM.", "Opção de compilação STICKYAIM_WITH_VIGEM."},
     {"Administrator", "Administrador"},
-    {"Nothing in StickyAim", "Nada no StickyAim"},
-    {"StickyAim does not require elevation. Driver installers do.",
-     "O StickyAim não precisa de administrador. Os instaladores de drivers precisam."},
+    {"Nothing in Upgrade Aim", "Nada no Upgrade Aim"},
+    {"Upgrade Aim does not require elevation. Driver installers do.",
+     "O Upgrade Aim não precisa de administrador. Os instaladores de drivers precisam."},
     {"Virtual output: <b>%1</b> · ViGEmBus %2 · HidHide %3 · %4 controller interface(s) found.",
      "Saída virtual: <b>%1</b> · ViGEmBus %2 · HidHide %3 · %4 interface(s) de controle encontrada(s)."},
     {"yes", "sim"},
@@ -279,11 +355,11 @@ const std::pair<const char*, const char*> kPtBr[] = {
      "Before enabling it, understand that:\n"
      "• Many online games, including Call of Duty, prohibit unauthorized software or devices that modify controller input. "
      "Activision's RICOCHET anti-cheat targets input-modifying devices (e.g. Cronus Zen, XIM) and in 2026 announced detections "
-     "based on input timing and patterns. Using this output in online play can put your account at risk of a ban. StickyAim "
+     "based on input timing and patterns. Using this output in online play can put your account at risk of a ban. Upgrade Aim "
      "does not and will not attempt to hide itself from anti-cheat software.\n"
      "• It requires the ViGEmBus driver, which you install yourself. Its project was retired in 2023 and receives no updates.\n"
      "• Without hiding the physical controller (e.g. HidHide), the game may receive BOTH controllers (double input).\n"
-     "• StickyAim never changes the game's own aim assist. Any improvement must be measured, not assumed.\n\n"
+     "• Upgrade Aim never changes the game's own aim assist. Any improvement must be measured, not assumed.\n\n"
      "Safer alternatives: use the Stick Lab and Testing pages to find values, then enter them in the game's own controller "
      "settings or in the controller manufacturer's official software.\n\n"
      "Enable virtual controller output?",
@@ -293,11 +369,11 @@ const std::pair<const char*, const char*> kPtBr[] = {
      "• Muitos jogos online, incluindo Call of Duty, proíbem softwares ou dispositivos não autorizados que modificam a entrada "
      "do controle. O anti-cheat RICOCHET da Activision mira dispositivos que modificam a entrada (ex.: Cronus Zen, XIM) e em "
      "2026 anunciou detecções baseadas no tempo e nos padrões da entrada. Usar esta saída no online pode levar sua conta a ser "
-     "banida. O StickyAim não tenta e não vai tentar se esconder de anti-cheat.\n"
+     "banida. O Upgrade Aim não tenta e não vai tentar se esconder de anti-cheat.\n"
      "• Ela precisa do driver ViGEmBus, que você instala por conta própria. O projeto foi descontinuado em 2023 e não recebe "
      "atualizações.\n"
      "• Sem esconder o controle físico (ex.: HidHide), o jogo pode receber OS DOIS controles (entrada dupla).\n"
-     "• O StickyAim nunca altera o aim assist do próprio jogo. Qualquer melhora precisa ser medida, não presumida.\n\n"
+     "• O Upgrade Aim nunca altera o aim assist do próprio jogo. Qualquer melhora precisa ser medida, não presumida.\n\n"
      "Alternativas mais seguras: use as páginas Lab. do analógico e Testes para achar os valores e depois coloque-os nas "
      "configurações de controle do próprio jogo ou no software oficial do fabricante do controle.\n\n"
      "Ativar a saída para controle virtual?"},

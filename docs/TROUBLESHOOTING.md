@@ -1,75 +1,80 @@
-# Troubleshooting
+# Solução de problemas
 
-Logs: `%APPDATA%\StickyAimLab\logs\app.jsonl` (app) and `cli.jsonl` (CLI), JSON Lines with monotonic timestamps. Settings → "Open data folder".
+Logs: `%APPDATA%\UpgradeAim\logs\app.jsonl` (app) e `cli.jsonl` (CLI), em JSON Lines com carimbos de tempo monotônicos. Configurações → "Abrir pasta de dados".
 
-## Controller
+## Controle
 
-**The controller is not listed / Dashboard says "Demo signal".**
-- Run `stickyaim-cli devices`. If no XInput slot is connected, check the controller's mode switch (it must be in XInput/PC mode for the XInput source) and the cable or receiver.
-- If it is listed under HID but not XInput, choose the HID entry as input source and add a device mapping ([ADDING_CONTROLLERS.md](ADDING_CONTROLLERS.md)).
-- If HidHide is installed and the device is hidden, add `StickyAimLab.exe` to HidHide's allow-list.
+**O controle não aparece / o Painel mostra "Sinal de demonstração".**
+- Rode `upgradeaim-cli devices`. Se nenhum slot XInput estiver conectado, confira a chave de modo do controle (ele precisa estar no modo XInput/PC para a fonte XInput) e o cabo ou receptor.
+- Se ele aparece em HID mas não em XInput, escolha a entrada HID como fonte e adicione um mapeamento de dispositivo ([ADDING_CONTROLLERS.md](ADDING_CONTROLLERS.md)).
+- Se o HidHide estiver instalado e o dispositivo escondido, adicione o `UpgradeAim.exe` à lista de permitidos do HidHide.
 
-**"Missed packets" keeps increasing.**
-- The engine polls less often than the controller changes state. Use Latency Lab → Mode "Spin", or lower the interval to 125 µs (the default). At 250 µs about 70 % of the Tarantula 8K's state changes were not observed.
-- A few hundred per minute in Hybrid mode is normal (scheduler wake-up jitter). It means intermediate states were skipped, not that the latest state was lost.
+**Um analógico mexe o círculo errado, ou os dois círculos.**
+- No Painel e no Lab. do analógico, o círculo da esquerda é o analógico esquerdo e o da direita é o direito, cada um com o valor original (cinza) e o processado (azul ou laranja no ADS). Até 27/10/2026 o Lab. do analógico mostrava o analógico direito duas vezes (original e processado), o que dava a impressão de que o direito mexia os dois.
 
-**New samples per second is far below the advertised polling rate.**
-- XInput only reports state *changes*. A perfectly still stick produces none. Measure while moving the stick.
-- The Raw Input table in Latency Lab shows HID report arrival separately. USB polling rate, HID report rate and StickyAim's processing rate are three different quantities.
+**"Pacotes perdidos" não para de subir.**
+- O motor lê com menos frequência do que o controle muda de estado. Use Lab. de latência → Modo "Spin", ou baixe o intervalo para 125 µs (o padrão). A 250 µs cerca de 70 % das mudanças de estado do Tarantula 8K não eram vistas.
+- Algumas centenas por minuto no modo Híbrido é normal (variação do agendador do Windows). Isso quer dizer que estados intermediários foram pulados, não que o estado mais recente se perdeu.
 
-**The stick drifts or the aim creeps at rest.**
-- Stick Lab → Rest test (hands off) → "Apply measured center", then "Use recommended inner deadzone". The Dashboard shows the active center calibration.
-- A "drift suspected" warning means the resting offset is above 0.06. The recommended deadzone still hides it, but the stick may need cleaning or service.
+**As amostras novas por segundo ficam muito abaixo da taxa de polling anunciada.**
+- O XInput só informa *mudanças* de estado. Um analógico totalmente parado não gera nenhuma. Meça mexendo o analógico.
+- A tabela Raw Input do Lab. de latência mostra a chegada dos relatórios HID separadamente. Taxa de polling USB, taxa de relatórios HID e taxa de processamento do Upgrade Aim são três coisas diferentes.
 
-**The sticks on screen look slow or choppy.**
-- Dashboard → "Controller read rate" shows the screen's frame rate and how old the drawn data is. The UI redraws once per monitor refresh (60/144/240 Hz). No monitor can show 8 kHz, but the engine still reads and processes every state.
-- Before 2026-10-27 the Dashboard re-enumerated all HID devices on every frame (about 60 ms each), which limited the UI to about 14 fps. Device matching now runs only on start, connect/disconnect and "Rescan devices".
+**O analógico tem drift ou a mira anda sozinha parada.**
+- Lab. do analógico → "Teste em repouso · 3 s" (sem tocar) → "Aplicar centro" e depois "Aplicar deadzone". O Painel mostra a calibração de centro ativa.
+- O aviso "possível drift no analógico" quer dizer que o desvio em repouso passa de 0,06. A deadzone recomendada ainda esconde isso, mas o analógico pode precisar de limpeza ou manutenção.
 
-**Diagonals feel snapped to the axes.**
-- The deadzone type is Axial. Use Radial.
+**Os analógicos na tela parecem lentos ou travando.**
+- Painel → "Taxa de leitura do controle" mostra quantos quadros por segundo a tela desenha. A interface redesenha uma vez por atualização do monitor. Nenhum monitor mostra 8 kHz, mas o motor continua lendo e processando todos os estados.
+- Até 27/10/2026 o Painel procurava de novo todos os dispositivos HID em todo quadro (cerca de 60 ms cada vez), o que limitava a tela a uns 14 fps. Agora essa busca só acontece ao iniciar, ao conectar/desconectar o controle e em "Procurar".
 
-## Processing
+**As diagonais parecem puxadas para os eixos.**
+- O tipo de deadzone está como Axial. Use Radial.
 
-**Aiming feels delayed.**
-- Check smoothing: any filter other than "Off" adds lag. Testing → Synthetic shows the exact added lag (tracking_1hz, micro_adjust). Raise the One Euro min cutoff or the flick bypass, or turn smoothing off.
-- Check a crossfade time in Aim Profiles (hip ↔ ADS).
-- Check the game's and Steam Input's own deadzones and curves: they stack with StickyAim's.
+## Processamento
 
-**Full deflection does not reach maximum turn speed.**
-- Outer threshold too high for your stick's range. Run the Range sweep and apply the recommendation.
-- Sensitivity < 1 on that axis.
+**A mira parece atrasada.**
+- Confira a suavização: qualquer filtro diferente de "Desligada" adiciona atraso. O card "Suavização" do Painel e a página Testes → Sintético mostram o atraso exato (rastreio 1 Hz, microajuste). Aumente o corte mínimo do One Euro ou a velocidade do bypass de flick, ou desligue a suavização.
+- Confira se há transição hip ↔ ADS em Perfis de mira.
+- Confira as deadzones e curvas do próprio jogo e do Steam Input: elas se somam às do Upgrade Aim.
 
-**A profile does not load.**
-- The error message names the invalid field (for example inner deadzone ≥ outer threshold). Files are validated, not silently "fixed".
+**A deflexão total não chega na velocidade máxima de giro.**
+- O limite externo está alto demais para o alcance do seu analógico. Rode o "Teste de alcance · 6 s" e aplique a recomendação.
+- A sensibilidade está abaixo de 1 nesse eixo.
 
-## Virtual output
+**Um perfil não carrega.**
+- A mensagem de erro diz qual campo é inválido (por exemplo, deadzone interna ≥ limite externo). Os arquivos são validados, não "consertados" sem avisar.
+
+## Saída virtual
 
 **"ViGEmBus driver not found".**
-- The driver is not installed or not running. See [DELIVERY.md](DELIVERY.md). Device Compatibility → Drivers shows its state.
+- O driver não está instalado ou não está rodando. Veja [DELIVERY.md](DELIVERY.md). Compatibilidade → Drivers mostra a situação dele.
 
-**"Virtual controller took the same XInput slot as the input source".**
-- Reconnect the physical controller first, then enable virtual output, so the physical pad keeps the lower slot.
+**"O controle virtual ficou no mesmo slot XInput da fonte de entrada".**
+- Reconecte o controle físico primeiro e só depois ative a saída virtual, para o controle físico ficar com o slot menor.
 
-**The game reacts twice / erratically.**
-- Double input: the game reads both controllers. Hide the physical controller with HidHide (allow-list StickyAim), or configure Steam Input appropriately ([COMPATIBILITY.md](COMPATIBILITY.md)).
+**O jogo responde em dobro / de forma errática.**
+- Entrada dupla: o jogo lê os dois controles. Esconda o controle físico com o HidHide (com o Upgrade Aim na lista de permitidos), ou configure o Steam Input adequadamente ([COMPATIBILITY.md](COMPATIBILITY.md)).
 
-**No rumble.**
-- Rumble is forwarded from the virtual pad to the physical XInput slot. Not verified on real hardware yet. Check that the physical controller supports XInput vibration.
+**Sem vibração.**
+- A vibração é repassada do controle virtual para o slot XInput do controle físico. Ainda não foi verificado em hardware real. Confira se o controle físico aceita vibração pelo XInput.
 
-## Performance
+## Desempenho
 
-**One CPU core at 100 %.**
-- Spin and Hybrid at short intervals busy-wait by design. Use Timer mode (lower CPU, more jitter) or a longer interval. The trade-off is visible in Latency Lab.
+**Um núcleo do processador em 100 %.**
+- Os modos Spin e Híbrido com intervalos curtos fazem espera ativa de propósito. Use o modo Só timer (menos CPU, mais variação) ou um intervalo maior. A troca aparece no Lab. de latência.
 
-**Hotkeys do not work.**
-- Another program has registered Ctrl+Alt+P/X/1–9. The status bar says so at start-up.
+**Os atalhos não funcionam.**
+- Outro programa já registrou Ctrl+Alt+P/X/1–9. O app avisa isso ao abrir.
 
-## Build
+## Compilação
 
-**`vswhere.exe not found`.** Install Visual Studio 2022 or Build Tools 2022 with the C++ workload.
+**`vswhere.exe not found`.** Instale o Visual Studio 2022 ou o Build Tools 2022 com a carga de trabalho de C++.
 
-**`Qt 6 (msvc2022_64) not found`.** Pass `-QtRoot C:\Qt\6.8.3\msvc2022_64` or set `QT_ROOT`.
+**`Qt 6 (msvc2022_64) not found`.** Passe `-QtRoot C:\Qt\6.8.3\msvc2022_64` ou defina `QT_ROOT`.
 
-**FetchContent download fails.** The first configure needs network access to GitHub. Behind a proxy, set `HTTPS_PROXY`.
+**O download do FetchContent falha.** A primeira configuração precisa de acesso ao GitHub. Atrás de um proxy, defina `HTTPS_PROXY`.
 
-**`StickyAimLab.exe` does not start outside the build folder (missing Qt DLLs).** Build with `-Deploy`, or run `windeployqt` on the executable.
+**O `UpgradeAim.exe` não abre fora da pasta de compilação (faltam DLLs do Qt).** Compile com `-Deploy` ou rode o `windeployqt` no executável.
+
+**Meus perfis e configurações sumiram depois da troca de nome.** A pasta de dados mudou de `%APPDATA%\StickyAimLab` para `%APPDATA%\UpgradeAim`. Na primeira execução o app copia a pasta antiga para a nova, se a nova ainda não existir. Se você já tinha aberto a versão nova antes, copie manualmente os arquivos da pasta antiga.

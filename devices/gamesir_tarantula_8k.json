@@ -4,20 +4,20 @@
   "modes": [
     {
       "product_id": "103D",
-      "mode": "XInput (Xbox 360 compatible)",
-      "connection": "USB (cable or 2.4 GHz receiver: both enumerate as USB, so the link type was not determined)",
-      "verification": "Observed 2026-10-27 on Windows 11 Pro 26200 with the StickyAim CLI: enumerates as 'Xbox 360 Controller for Windows' (xusb22, XInput slot 0), HID interfaces IG_00 (gamepad, XInput HID view) and MI_01 (consumer control + vendor page 0xFFF0). Untouched sticks produced 7576 state changes/s via XInput and 7576 HID reports/s via Raw Input (mean interval 132 us, p50 124.5 us) over 5 s."
+      "mode": "XInput (compatível com Xbox 360)",
+      "connection": "USB (cabo ou receptor 2.4 GHz: os dois aparecem como USB, então o tipo de conexão não foi determinado)",
+      "verification": "Observado em 27/10/2026 no Windows 11 Pro 26200 com a CLI do Upgrade Aim: aparece como 'Xbox 360 Controller for Windows' (xusb22, slot XInput 0), interfaces HID IG_00 (gamepad, visão HID do XInput) e MI_01 (consumer control + página de fabricante 0xFFF0). Com os analógicos sem tocar, foram 7576 mudanças de estado/s via XInput e 7576 relatórios HID/s via Raw Input (intervalo médio 132 us, p50 124,5 us) em 5 s."
     }
   ],
   "notes": [
-    "At rest the sticks jitter by about +/-20 raw counts (sd ~0.0002 normalized) on every report, so XInput's packet number advances continuously even when the controller is untouched. This is why the measured state-change rate is close to the report rate at rest.",
-    "Measured rest offsets on the test unit: right stick |v| ~0.015, left stick ~0.031. Re-measure your own unit with Stick Lab > Rest calibration.",
-    "MI_01 exposes a vendor-defined collection (usage page 0xFFF0). StickyAim never writes to it; it is presumably the channel used by GameSir's own configuration software."
+    "Em repouso os analógicos variam cerca de +/-20 unidades brutas (DP ~0,0002 normalizado) em todo relatório, então o contador de pacotes do XInput avança sem parar mesmo com o controle parado. Por isso a taxa de mudanças de estado medida em repouso fica próxima da taxa de relatórios.",
+    "Desvios em repouso medidos na unidade de teste: analógico direito |v| ~0,015, esquerdo ~0,031. Meça a sua unidade com o teste em repouso do Lab. do analógico.",
+    "A MI_01 expõe uma coleção definida pelo fabricante (página 0xFFF0). O Upgrade Aim nunca escreve nela; provavelmente é o canal usado pelo software de configuração da própria GameSir."
   ],
   "unverified": [
-    "Product IDs for other modes (Switch, DirectInput/Android, Bluetooth, 2.4 GHz dongle) are not in this file because they were not observed.",
-    "Whether the 8 kHz rate is available on the 2.4 GHz receiver or only wired.",
-    "Firmware-side deadzone/curve settings and how they interact with StickyAim processing."
+    "Os Product IDs dos outros modos (Switch, DirectInput/Android, Bluetooth, receptor 2.4 GHz) não estão neste arquivo porque não foram observados.",
+    "Se a taxa de 8 kHz funciona no receptor 2.4 GHz ou só com cabo.",
+    "As configurações de deadzone/curva do firmware e como elas interagem com o processamento do Upgrade Aim."
   ],
   "hid_mapping": {
     "preset": "xinput_hid",

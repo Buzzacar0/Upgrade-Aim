@@ -13,8 +13,8 @@
 
 int main(int argc, char** argv) {
     QApplication qapp(argc, argv);
-    QApplication::setApplicationName("StickyAim Lab");
-    QApplication::setOrganizationName("StickyAim");
+    QApplication::setApplicationName("Upgrade Aim");
+    QApplication::setOrganizationName("Upgrade Aim");
     qapp.setStyle("Fusion");
     qapp.setPalette(ui::palette());
     qapp.setFont(QFont(ui::fontFamily(), 10));
@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     const std::string logDir = sa::win::userDataDir() + "\\logs";
     CreateDirectoryW(sa::win::fromUtf8(logDir).c_str(), nullptr);
     sa::Logger::instance().start(logDir + "\\app.jsonl");
-    sa::logInfo("app", "StickyAim Lab starting");
+    sa::logInfo("app", "Upgrade Aim starting");
 
     // Language: the launcher asks (pt-BR by default); --lang en|pt-BR skips it,
     // and so does --screenshots (English unless --lang says otherwise).
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
         if (shotsArg >= 0 && shotsArg + 1 < args.size()) w.captureAllPages(args[shotsArg + 1]);
         rc = qapp.exec();
     }
-    sa::logInfo("app", "StickyAim Lab exiting");
+    sa::logInfo("app", "Upgrade Aim exiting");
     sa::Logger::instance().stop();
     return rc;
 }

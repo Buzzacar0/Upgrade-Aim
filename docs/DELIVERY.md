@@ -1,57 +1,57 @@
-# Input delivery: preview, virtual controller, drivers and risks
+# Envio da entrada: pré-visualização, controle virtual, drivers e riscos
 
-## Modes
+## Modos
 
-| Mode | What happens | Needs | Default |
+| Modo | O que acontece | Precisa de | Padrão |
 | --- | --- | --- | --- |
-| **Safe preview** | The processed state is computed, timed and visualized, but delivered nowhere. No other program can see it. | nothing | **yes** |
-| **Pass-through** | The raw controller state is sent unchanged (in preview: nothing leaves the process). Use it as the panic switch and for A/B comparisons. | — | off |
-| **Virtual Xbox 360 controller** | A ViGEm virtual pad is created and receives the processed state. Game rumble sent to the virtual pad is forwarded to the physical controller. | ViGEmBus driver; usually HidHide too | off; must be enabled in Settings after a risk notice |
+| **Pré-visualização segura** | O estado processado é calculado, medido e mostrado, mas não é enviado a lugar nenhum. Nenhum outro programa consegue vê-lo. | nada | **sim** |
+| **Pass-through** | O estado original do controle é enviado sem alteração (na pré-visualização, nada sai do processo). Use como botão de pânico e nas comparações A/B. | — | desligado |
+| **Controle Xbox 360 virtual** | Um controle virtual ViGEm é criado e recebe o estado processado. A vibração que o jogo manda para o controle virtual é repassada ao controle físico. | driver ViGEmBus; normalmente também o HidHide | desligado; precisa ser ativado em Configurações, depois de um aviso de risco |
 
-## Account and terms-of-service risk
+## Risco para a conta e para os termos de uso
 
-- Many online games forbid unauthorized software or hardware that modifies controller input. Activision's security and enforcement policy covers this for Call of Duty. Its RICOCHET anti-cheat targets input-modifying devices (Cronus Zen, XIM Matrix) and in Feb 2026 announced detections based on input timing, consistency and response patterns rather than device signatures.
-- A virtual controller fed by this tool is an input-modification layer of the same category. Using it in online play may lead to enforcement against your account. StickyAim does not try to hide from, evade or interfere with anti-cheat software, and will not.
-- The aiming-relevant features (deadzone, curve, sensitivity per axis, ADS response) have equivalents in most games' own controller settings and in the controller maker's official software. The safer workflow is to find the values here (measured on your controller), then set them there.
+- Muitos jogos online proíbem softwares ou hardwares não autorizados que modificam a entrada do controle. A política de segurança e punições da Activision cobre isso no Call of Duty. O anti-cheat RICOCHET mira dispositivos que modificam a entrada (Cronus Zen, XIM Matrix) e em fevereiro de 2026 anunciou detecções baseadas no tempo, na consistência e nos padrões de resposta da entrada, e não em assinaturas de dispositivo.
+- Um controle virtual alimentado por esta ferramenta é uma camada de modificação da entrada da mesma categoria. Usá-lo no online pode levar a punições na sua conta. O Upgrade Aim não tenta se esconder, escapar ou interferir com anti-cheat, e não vai tentar.
+- Os recursos que importam para a mira (deadzone, curva, sensibilidade por eixo, resposta no ADS) têm equivalentes nas configurações de controle da maioria dos jogos e no software oficial do fabricante do controle. O caminho mais seguro é achar os valores aqui (medidos no seu controle) e colocá-los lá.
 
-## Driver requirements
+## Drivers necessários
 
-StickyAim never installs drivers, never changes security settings, and runs without administrator rights. Driver installers need administrator rights and are the user's decision.
+O Upgrade Aim nunca instala drivers, nunca altera configurações de segurança e roda sem administrador. Os instaladores de drivers precisam de administrador e a decisão de instalar é do usuário.
 
 ### ViGEmBus
 
-- Needed for: virtual controller output only.
-- Status: retired upstream (archived Nov 2023), no further updates. It is a kernel-mode bus driver. Install it only if you accept running an unmaintained kernel driver.
-- Install: download the final release from the author's official GitHub releases page (`nefarius/ViGEmBus`) and run the installer as administrator. Do not use re-hosted installers.
-- Check: Device Compatibility → Drivers shows `ViGEmBus: running`. `stickyaim-cli devices` shows the same.
-- Uninstall: Windows Settings → Apps → "Nefarius Virtual Gamepad Emulation Bus Driver".
-- **Not verified during development**: the driver was not installed on the development machine, so the ViGEm sink has been compiled but never run.
+- Necessário para: só a saída para controle virtual.
+- Situação: descontinuado pelo autor (arquivado em nov/2023), sem novas atualizações. É um driver de barramento em modo kernel. Instale só se aceitar rodar um driver de kernel sem manutenção.
+- Instalação: baixe a última versão na página oficial de releases do autor no GitHub (`nefarius/ViGEmBus`) e rode o instalador como administrador. Não use instaladores hospedados em outros lugares.
+- Conferência: Compatibilidade → Drivers mostra `ViGEmBus: rodando`. `upgradeaim-cli devices` mostra o mesmo.
+- Desinstalação: Configurações do Windows → Aplicativos → "Nefarius Virtual Gamepad Emulation Bus Driver".
+- **Não verificado durante o desenvolvimento**: o driver não estava instalado no PC de desenvolvimento, então a saída ViGEm foi compilada, mas nunca rodou.
 
-### HidHide (optional, recommended with virtual output)
+### HidHide (opcional, recomendado com a saída virtual)
 
-- Why: with a virtual pad active, a game usually sees both the physical and the virtual controller and reads both (double input). HidHide hides the physical device from all programs except allow-listed ones.
-- Setup: install HidHide (administrator), open its configuration client, add `StickyAimLab.exe` (and `stickyaim-cli.exe` if used) to the application allow-list, then hide the Tarantula's device entries.
-- Warning: if StickyAim is not allow-listed, it can no longer read the controller. If you hide the device and then uninstall StickyAim, unhide the device in HidHide first.
-- Not verified during development.
+- Por quê: com um controle virtual ativo, o jogo normalmente vê o controle físico e o virtual e lê os dois (entrada dupla). O HidHide esconde o dispositivo físico de todos os programas, menos dos que estão na lista de permitidos.
+- Configuração: instale o HidHide (administrador), abra o cliente de configuração, adicione `UpgradeAim.exe` (e `upgradeaim-cli.exe`, se usar) à lista de aplicativos permitidos e depois esconda as entradas do Tarantula.
+- Atenção: se o Upgrade Aim não estiver na lista de permitidos, ele deixa de conseguir ler o controle. Se você esconder o dispositivo e depois desinstalar o Upgrade Aim, mostre o dispositivo de novo no HidHide antes.
+- Não verificado durante o desenvolvimento.
 
-## Safety behaviour of the output path
+## Comportamento de segurança da saída
 
-| Situation | Behaviour |
+| Situação | Comportamento |
 | --- | --- |
-| Engine start with virtual output | refuses if the virtual pad would take the same XInput slot as the input source (feedback loop) |
-| Physical controller disconnects | neutral report sent immediately (sticks centered, triggers and buttons released). Reconnect is retried every 250 ms. |
-| Ctrl+Alt+X | virtual pad removed at once, back to preview |
-| Ctrl+Alt+P / hold Back+Start 1.5 s | toggles pass-through |
-| App closes normally | `Engine::stop()` sends neutral and removes the virtual pad |
-| Process crashes | expected: the ViGEm bus handle is closed by Windows and the bus unplugs targets it owned. **Not verified** (no ViGEmBus on the development machine). |
-| Turning off "Allow virtual output" | returns to preview immediately |
+| Motor iniciando com saída virtual | recusa se o controle virtual for ficar no mesmo slot XInput da fonte de entrada (loop de realimentação) |
+| Controle físico desconecta | estado neutro enviado na hora (analógicos no centro, gatilhos e botões soltos). Nova tentativa de conexão a cada 250 ms. |
+| Ctrl+Alt+X | controle virtual removido na hora, volta para a pré-visualização |
+| Ctrl+Alt+P / segurar Back+Start 1,5 s | liga/desliga o pass-through |
+| App fecha normalmente | `Engine::stop()` envia o estado neutro e remove o controle virtual |
+| O processo trava | esperado: o Windows fecha o handle do barramento ViGEm e o barramento desconecta os controles virtuais dele. **Não verificado** (sem ViGEmBus no PC de desenvolvimento). |
+| Desligar "Permitir saída para controle virtual" | volta para a pré-visualização na hora |
 
-## Using the virtual output from the CLI
+## Usando a saída virtual pela CLI
 
-The CLI refuses to inject unless told explicitly:
+A CLI se recusa a enviar entrada se você não pedir explicitamente:
 
 ```bash
-stickyaim-cli run --profile profiles/tarantula8k_precision.json --output vigem --confirm-injection
+upgradeaim-cli run --profile profiles/tarantula8k_precisao.json --output vigem --confirm-injection
 ```
 
-Without `--confirm-injection` it prints the risk notice and exits.
+Sem `--confirm-injection`, ela mostra o aviso de risco e fecha.

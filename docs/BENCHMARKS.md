@@ -1,88 +1,101 @@
 # Benchmarks
 
-All numbers were measured on 2026-10-27 on the development machine (Windows 11 Pro 10.0.26200, x64, AMD platform, MSVC 2022, RelWithDebInfo build) with a **GameSir Tarantula 8K** over USB in XInput mode. Re-run them on your machine with the commands given; numbers from another machine do not transfer.
+Todos os números foram medidos em 27/10/2026 no PC de desenvolvimento (Windows 11 Pro 10.0.26200, x64, plataforma AMD, MSVC 2022, compilação RelWithDebInfo) com um **GameSir Tarantula 8K** via USB no modo XInput. Refaça as medições no seu PC com os comandos indicados; números de outra máquina não valem para a sua.
 
-## 1. Device timing (CLI `measure`, sticks untouched, 5 s, spin polling)
+## 1. Tempo do dispositivo (CLI `measure`, analógicos parados, 5 s, leitura spin)
 
 ```bash
-stickyaim-cli measure --seconds 5 --mode spin
+upgradeaim-cli measure --seconds 5 --mode spin
 ```
 
-| Quantity | n | mean | sd | p50 | p95 | p99 | max |
+| Grandeza | n | média | DP | p50 | p95 | p99 | máx. |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| XInput state-change interval | 37,878 | 132.0 µs (7,576 /s) | 33.7 µs | 124.5 µs | 169.5 µs | 258.5 µs | 426.9 µs |
-| Raw Input HID report interval (IG_00) | 37,878 | 132.0 µs (7,576 /s) | 37.9 µs | 124.5 µs | 225.5 µs | 277.5 µs | 465.5 µs |
-| `XInputGetState()` call cost | 3.0 M | 1.61 µs | — | — | — | 2.75 µs | 179.5 µs |
+| Intervalo entre mudanças de estado XInput | 37.878 | 132,0 µs (7.576 /s) | 33,7 µs | 124,5 µs | 169,5 µs | 258,5 µs | 426,9 µs |
+| Intervalo entre relatórios HID via Raw Input (IG_00) | 37.878 | 132,0 µs (7.576 /s) | 37,9 µs | 124,5 µs | 225,5 µs | 277,5 µs | 465,5 µs |
+| Custo de uma chamada `XInputGetState()` | 3,0 M | 1,61 µs | — | — | — | 2,75 µs | 179,5 µs |
 
-- Packet numbers skipped between polls: 0. HID messages carrying more than one report: 3 of 37,876.
-- The packet number advances at rest because the stick values jitter by about ±20 raw counts on every report. Measure with the stick moving as well: a controller with a quieter sensor would show far fewer XInput changes at rest, and that would not mean a lower polling rate.
+- Pacotes pulados entre leituras: 0. Mensagens HID com mais de um relatório: 3 de 37.876.
+- O contador de pacotes avança em repouso porque os valores do analógico variam cerca de ±20 unidades brutas em todo relatório. Meça também com o analógico em movimento: um controle com sensor mais silencioso mostraria bem menos mudanças XInput em repouso, e isso não significaria uma taxa de polling menor.
 
-## 2. Rest noise (CLI `calibrate`)
+## 2. Ruído em repouso (CLI `calibrate`)
 
 ```bash
-stickyaim-cli calibrate --rest 4 --range 6 --out cal.json
+upgradeaim-cli calibrate --rest 4 --range 6 --out cal.json
 ```
 
-| Stick | n | mean offset | sd | max \|v\| | max \|v − mean\| | recommended inner DZ (uncal / cal) |
+| Analógico | n | desvio médio | DP | máx. \|v\| | máx. \|v − média\| | deadzone interna recomendada (sem / com calibração) |
 | --- | --- | --- | --- | --- | --- | --- |
-| Right | 258 | (+0.0140, +0.0062) | (0.0002, 0.0002) | 0.0159 | 0.0007 | 0.019 / 0.010 |
-| Left | 258 | (+0.0060, +0.0296) | (0.0002, 0.0002) | 0.0308 | 0.0007 | 0.037 / 0.010 |
+| Direito | 258 | (+0,0140, +0,0062) | (0,0002, 0,0002) | 0,0159 | 0,0007 | 0,019 / 0,010 |
+| Esquerdo | 258 | (+0,0060, +0,0296) | (0,0002, 0,0002) | 0,0308 | 0,0007 | 0,037 / 0,010 |
 
-This run used an earlier capture loop that slept about 15 ms between polls, which is why n is only 258. The capture now spin-polls. The recommended values include a 20 % margin over the largest observed excursion, with a 0.010 floor.
+Essa medição usou uma versão antiga da captura, que esperava cerca de 15 ms entre leituras; por isso o n é só 258. A captura agora faz leitura spin. Os valores recomendados incluem uma margem de 20 % sobre o maior desvio observado, com mínimo de 0,010.
 
-## 3. Engine (CLI `run`, preview sink, hybrid 125 µs, stick moved by hand, 6 s)
+## 3. Motor (CLI `run`, saída de pré-visualização, híbrido 125 µs, analógico mexido à mão, 6 s)
 
 ```bash
-stickyaim-cli run --profile profiles/tarantula8k_precision.json --seconds 6 --mode hybrid --interval 125
+upgradeaim-cli run --profile profiles/tarantula8k_precisao.json --seconds 6 --mode hybrid --interval 125
 ```
 
-| Quantity | Result |
+| Grandeza | Resultado |
 | --- | --- |
-| New states processed | ≈ 7,400 /s (44,435 in 6 s) |
-| Device packets not observed by the loop | 873 cumulative (≈ 2 %; ≈ 0.3 % over the first 4 s) |
-| Late wake-ups (> 1 interval late) | 1 |
-| `Processor::process()` | p50 0.21 µs, p99 1.21 µs |
-| Sink submit (preview) | p50 0.1 µs, p99 0.2 µs |
-| Acquisition → submit complete | p99 1.5 µs |
+| Estados novos processados | ≈ 7.400 /s (44.435 em 6 s) |
+| Pacotes do controle não vistos pelo motor | 873 no total (≈ 2 %; ≈ 0,3 % nos primeiros 4 s) |
+| Atrasos do agendador (> 1 intervalo) | 1 |
+| `Processor::process()` | p50 0,21 µs, p99 1,21 µs |
+| Envio para a saída (pré-visualização) | p50 0,1 µs, p99 0,2 µs |
+| Leitura → envio concluído | p99 1,5 µs |
 
-Same machine, earlier session, default interval 250 µs: ≈ 2,300 new states/s, and most of the device's state changes were not observed. That is why the default is now 125 µs. Spin mode observes every packet the driver exposes at the cost of one busy core.
+Mesmo PC, sessão anterior, intervalo padrão de 250 µs: ≈ 2.300 estados novos/s, e a maior parte das mudanças de estado do controle não era vista. Por isso o padrão agora é 125 µs. O modo spin vê todo pacote que o driver expõe, ao custo de ocupar um núcleo.
 
-The ViGEm sink's submit cost (a `DeviceIoControl` per sample) was **not measured** (no ViGEmBus installed).
+O custo de envio da saída ViGEm (um `DeviceIoControl` por amostra) **não foi medido** (sem ViGEmBus instalado).
 
-## 4. Processing cost (synthetic, `benchmarkProcessing`)
+## 4. Atraso adicionado pelo app (Painel, ao vivo)
 
-| Condition | Batch mean per sample | per-sample p50 / p99 |
+O Painel mostra o tempo de resposta sem e com o app. "Sem o app" é o intervalo entre estados novos do controle. "Com o app" soma esse intervalo à espera pela próxima leitura (metade do intervalo entre leituras, em média), ao processamento, ao envio e à suavização do perfil.
+
+| Grandeza | Resultado (perfil base, pré-visualização) |
+| --- | --- |
+| Sem o app | ≈ 0,134–0,140 ms |
+| Com o app | ≈ 0,197–0,203 ms |
+| Adicionado pelo app | ≈ 0,063 ms em média, pior caso (p99) ≈ 0,13 ms |
+| Quadros por segundo da tela | ≈ 64 fps (antes da correção de 27/10/2026: ≈ 14 fps) |
+
+A latência de USB, driver e jogo é a mesma nos dois casos e não é medida.
+
+## 5. Custo do processamento (sintético, `benchmarkProcessing`)
+
+| Condição | Média do lote por amostra | p50 / p99 por amostra |
 | --- | --- | --- |
-| Idle machine, shipped profiles | 87–92 ns | 102 / 202 ns (QPC quantization: 100 ns) |
-| Every core saturated by other threads (unit test `Latency.ProcessingCostUnderLoad`) | 386 ns | 102 / 202 ns; max 18.9 ms (pre-emption of a normal-priority test thread) |
+| PC ocioso, perfis de exemplo | 87–92 ns | 102 / 202 ns (resolução do QPC: 100 ns) |
+| Todos os núcleos ocupados por outras threads (teste `Latency.ProcessingCostUnderLoad`) | 386 ns | 102 / 202 ns; máx. 18,9 ms (preempção de uma thread de teste com prioridade normal) |
 
-## 5. Synthetic comparison suite (CLI `compare`, 1000 Hz, hip context)
+## 6. Bateria de comparação sintética (CLI `compare`, 1000 Hz, contexto hip)
 
 ```bash
-stickyaim-cli compare --profile profiles/<name>.json --context hip --out report.json
+upgradeaim-cli compare --profile profiles/<nome>.json --context hip --out relatorio.json
 ```
 
-Full JSON reports are in [benchmarks/](benchmarks/). Added lag is time-to-50 % (steps) or cross-correlation delay (sine and micro-adjust) relative to the raw signal. Gain ratio is RMS(output) / RMS(input) along the test direction.
+Os relatórios JSON completos estão em [benchmarks/](benchmarks/). Eles foram gerados antes da troca de nome dos perfis, então os arquivos ainda usam os nomes antigos (baseline = base, precision = precisao, custom_scurve = curva_s, tracking = rastreio_suave). O atraso adicionado é o tempo até 50 % (degraus) ou o atraso da correlação cruzada (seno e microajuste) em relação ao sinal original. A razão de ganho é RMS(saída) / RMS(entrada) na direção do teste.
 
-| Test | Baseline | Precision | Custom S-curve | Smooth tracking (hip) | Smooth tracking (ADS) |
+| Teste | Base | Precisão | Curva S | Rastreio suave (hip) | Rastreio suave (ADS) |
 | --- | --- | --- | --- | --- | --- |
-| rest_noise: output RMS (raw 0.0257) | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
-| step_50: added lag | 0 ms | 0 ms | 0 ms | 0 ms (flick bypass) | 0 ms |
-| tracking_1hz: added lag / gain | 0 ms / 0.922 | 0 ms / 0.606 | 0 ms / 0.538 | **12 ms** / 0.477 | **12 ms** / 0.349 |
-| micro_adjust: added lag / gain | 0 ms / 0.528 | 0 ms / 0.163 | 0 ms / 0.142 | **13 ms** / 0.188 | **13 ms** / 0.115 |
-| flick_left: added lag | 0 ms | 0 ms | 0 ms | 0 ms | 0 ms |
-| micro_adjust: output jerk RMS (raw 5.0e-3) | 4.2e-3 | 1.8e-3 | 1.3e-3 | 8.6e-5 | 5.3e-5 |
+| ruído em repouso: RMS da saída (original 0,0257) | 0,000 | 0,000 | 0,000 | 0,000 | 0,000 |
+| degrau 50 %: atraso adicionado | 0 ms | 0 ms | 0 ms | 0 ms (bypass de flick) | 0 ms |
+| rastreio 1 Hz: atraso adicionado / ganho | 0 ms / 0,922 | 0 ms / 0,606 | 0 ms / 0,538 | **12 ms** / 0,477 | **12 ms** / 0,349 |
+| microajuste: atraso adicionado / ganho | 0 ms / 0,528 | 0 ms / 0,163 | 0 ms / 0,142 | **13 ms** / 0,188 | **13 ms** / 0,115 |
+| flick à esquerda: atraso adicionado | 0 ms | 0 ms | 0 ms | 0 ms | 0 ms |
+| microajuste: RMS de jerk da saída (original 5,0e-3) | 4,2e-3 | 1,8e-3 | 1,3e-3 | 8,6e-5 | 5,3e-5 |
 
-Reading the table:
+Como ler a tabela:
 
-- Static shaping (deadzone, curve, bands, sensitivity) adds **zero** latency: the output changes on the same sample as the input.
-- Convex curves lower the gain at small deflections (micro-adjust gain 0.14–0.16 vs 0.53 linear). That means more stick travel per unit of output, which is the intended precision trade-off. It does not mean the controller is "slower" at full deflection: step_100 and full_circle stay at gain 1.000.
-- Smoothing is the only feature that adds latency. The first version of the Smooth-tracking profile added 37–38 ms. It was retuned to 12–13 ms. Given the low measured rest jitter of this controller, compare it against the Precision profile before keeping it.
-- The baseline's tracking jerk is higher than raw (1.2e-4 vs 2.5e-5) because the deadzone creates a kink at each zero crossing. This is a real, small artifact of any deadzone.
+- Os ajustes estáticos (deadzone, curva, faixas, sensibilidade) adicionam **zero** de latência: a saída muda na mesma amostra que a entrada.
+- Curvas convexas diminuem o ganho em deflexões pequenas (ganho no microajuste de 0,14–0,16 contra 0,53 na linear). Isso quer dizer mais curso do analógico por unidade de saída, que é a troca pretendida por mais precisão. Não quer dizer que o controle fica "mais lento" na deflexão total: degrau 100 % e círculo completo continuam com ganho 1,000.
+- A suavização é o único recurso que adiciona latência. A primeira versão do perfil Rastreio suave adicionava 37–38 ms. Ela foi ajustada para 12–13 ms. Como o ruído em repouso medido neste controle é baixo, compare com o perfil Precisão antes de ficar com ele.
+- O jerk de rastreio do perfil Base é maior que o original (1,2e-4 contra 2,5e-5) porque a deadzone cria uma quina a cada passagem pelo zero. É um efeito real e pequeno de qualquer deadzone.
 
-## Reproducing
+## Reproduzindo
 
-1. Build in release (`scripts/build.ps1`).
-2. Run the four commands above with your controller connected.
-3. Run `ctest --preset release -R Latency -V` for the load test.
-4. Compare your JSON reports with the ones in [benchmarks/](benchmarks/). Synthetic results must match to the last digit (seeded signals). Device and timing results depend on hardware and load.
+1. Compile em release (`scripts/build.ps1` ou `Upgrade Aim.bat`).
+2. Rode os comandos acima com o controle conectado.
+3. Rode `ctest --preset release -R Latency -V` para o teste sob carga.
+4. Compare os seus relatórios JSON com os de [benchmarks/](benchmarks/). Os resultados sintéticos precisam bater até o último dígito (sinais com semente fixa). Os resultados de dispositivo e de tempo dependem do hardware e da carga.

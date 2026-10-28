@@ -10,7 +10,7 @@ class QPushButton;
 
 // Start screen: background picture at reduced opacity, language choice
 // (Portuguese (Brazil) by default) and Start. The choice and the picture path
-// are remembered in %APPDATA%\StickyAimLab\launcher.ini.
+// are remembered in %APPDATA%\UpgradeAim\launcher.ini.
 class Launcher : public QDialog {
     Q_OBJECT
 public:

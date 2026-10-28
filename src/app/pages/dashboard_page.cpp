@@ -192,7 +192,7 @@ DashboardPage::DashboardPage(AppController* app, QWidget* parent) : QWidget(pare
         sourceCombo_->clear();
         for (const auto& s : sa::win::XInputSource::querySlots())
             if (s.connected)
-                sourceCombo_->addItem(QString(T("XInput slot %1 (%2)")).arg(s.slot).arg(QString::fromStdString(s.subtype)),
+                sourceCombo_->addItem(QString(T("XInput slot %1 (%2)")).arg(s.slot).arg(T((s.subtype).c_str())),
                                       QVariantList{0, s.slot, QString()});
         for (const auto& d : sa::win::enumerateHidDevices(true)) {
             if (!(d.usagePage == 0x01 && (d.usage == 0x04 || d.usage == 0x05))) continue;
@@ -315,7 +315,7 @@ void DashboardPage::refresh() {
                                         .arg(c.maxLateUs)
                                         .arg(c.disconnects)
                                         .arg(c.profileSwaps)
-                                        .arg(QString::fromStdString(c.priority)));
+                                        .arg(T((c.priority).c_str())));
 
     refreshResponse(running, c.bypass, injecting);
 

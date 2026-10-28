@@ -102,7 +102,7 @@ public:
     std::shared_ptr<sa::win::RawInputMonitor> rawInput() const { return rawInput_; }
     const std::vector<sa::KnownDevice>& deviceDb() const { return deviceDb_; }
 
-    // ---- settings (persisted to %APPDATA%\StickyAimLab\settings.json)
+    // ---- settings (persisted to %APPDATA%\UpgradeAim\settings.json)
     nlohmann::json& settings() { return settings_; }
     void saveSettings();
     bool allowVirtualOutput() const;

@@ -32,15 +32,15 @@ struct CheckItem {
 const CheckItem kChecks[] = {
     {"steam", "Game reacts to the physical controller (Steam Input OFF for the game)"},
     {"steam", "Game reacts to the physical controller (Steam Input ON for the game)"},
-    {"steam", "Game reacts to the StickyAim virtual pad"},
+    {"steam", "Game reacts to the Upgrade Aim virtual pad"},
     {"steam", "No double input while the virtual pad is active"},
     {"steam", "Rumble reaches the physical controller"},
     {"battlenet", "Game reacts to the physical controller"},
-    {"battlenet", "Game reacts to the StickyAim virtual pad"},
+    {"battlenet", "Game reacts to the Upgrade Aim virtual pad"},
     {"battlenet", "No double input while the virtual pad is active"},
     {"battlenet", "Rumble reaches the physical controller"},
     {"xbox", "Game reacts to the physical controller"},
-    {"xbox", "Game reacts to the StickyAim virtual pad"},
+    {"xbox", "Game reacts to the Upgrade Aim virtual pad"},
     {"xbox", "No double input while the virtual pad is active"},
     {"xbox", "Rumble reaches the physical controller"},
 };
@@ -108,7 +108,7 @@ CompatPage::CompatPage(AppController* app, QWidget* parent) : QWidget(parent), a
     box(T("HID interfaces of connected controllers"), hid_);
     drivers_ = makeTable({T("Component"), T("Status"), T("Needed for"), T("Notes")});
     box(T("Drivers and privileges"), drivers_,
-        T("StickyAim never installs drivers or changes security settings. Install third-party drivers yourself only after "
+        T("Upgrade Aim never installs drivers or changes security settings. Install third-party drivers yourself only after "
         "reading docs/DELIVERY.md."));
     launchers_ = makeTable({T("Launcher"), T("Installed"), T("Running"), T("Detected via"), T("Notes")});
     box(T("Launchers"), launchers_,
@@ -177,8 +177,8 @@ void CompatPage::refresh() {
     for (int i = 0; i < 4; ++i) {
         const auto& s = slots[static_cast<size_t>(i)];
         QString note;
-        if (app_->source().kind == AppController::SourceKind::XInput && app_->source().slot == i) note = T("StickyAim input source");
-        setRow(xinput_, i, {QString::number(i), s.connected ? T("yes") : T("no"), QString::fromStdString(s.subtype), s.connected ? (s.wireless ? T("yes") : T("no")) : "", note});
+        if (app_->source().kind == AppController::SourceKind::XInput && app_->source().slot == i) note = T("Upgrade Aim input source");
+        setRow(xinput_, i, {QString::number(i), s.connected ? T("yes") : T("no"), T((s.subtype).c_str()), s.connected ? (s.wireless ? T("yes") : T("no")) : "", note});
     }
 
     const auto hids = sa::win::enumerateHidDevices(true);
@@ -190,38 +190,38 @@ void CompatPage::refresh() {
         setRow(hid_, i,
                {QString::fromStdString(sa::hex4(d.vendorId) + ":" + sa::hex4(d.productId)),
                 d.xinputHidInterface ? T("XInput HID view") : (d.interfaceNumber >= 0 ? QString(T("MI_%1")).arg(d.interfaceNumber, 2, 10, QChar('0')) : "-"),
-                QString::fromStdString(d.usageName()), QString::fromStdString(d.product),
+                T((d.usageName()).c_str()), QString::fromStdString(d.product),
                 k ? QString::fromStdString(k->name + " — " + mode->mode) : T("not in device database"),
                 k ? (mode->verification.empty() ? T("unverified") : T("observed (see devices/*.json)")) : ""});
     }
 
     const auto drv = sa::win::probeDrivers();
     drivers_->setRowCount(5);
-    setRow(drivers_, 0, {T("ViGEmBus driver"), QString::fromStdString(drv.vigemBus.state), T("Virtual controller output (optional)"),
+    setRow(drivers_, 0, {T("ViGEmBus driver"), T((drv.vigemBus.state).c_str()), T("Virtual controller output (optional)"),
                          T("Retired upstream (archived Nov 2023). Still functional; no further updates.")});
-    setRow(drivers_, 1, {T("HidHide driver"), QString::fromStdString(drv.hidHide.state), T("Hiding the physical pad from games (optional)"),
+    setRow(drivers_, 1, {T("HidHide driver"), T((drv.hidHide.state).c_str()), T("Hiding the physical pad from games (optional)"),
                          T("Without it the game may see two controllers when the virtual pad is active.")});
-    setRow(drivers_, 2, {"xusb22 (Microsoft Xbox 360 driver)", QString::fromStdString(drv.xusb.state), T("XInput controllers"), T("Part of Windows.")});
+    setRow(drivers_, 2, {T("xusb22 (Microsoft Xbox 360 driver)"), T((drv.xusb.state).c_str()), T("XInput controllers"), T("Part of Windows.")});
     setRow(drivers_, 3, {T("ViGEm client in this build"), sa::win::ViGEmX360Sink::isCompiledIn() ? T("compiled in") : T("not compiled"),
                          T("Virtual output"), T("Build option STICKYAIM_WITH_VIGEM.")});
-    setRow(drivers_, 4, {T("Administrator"), drv.isElevated ? T("running elevated") : T("standard user"), T("Nothing in StickyAim"),
-                         T("StickyAim does not require elevation. Driver installers do.")});
+    setRow(drivers_, 4, {T("Administrator"), drv.isElevated ? T("running elevated") : T("standard user"), T("Nothing in Upgrade Aim"),
+                         T("Upgrade Aim does not require elevation. Driver installers do.")});
 
     const auto launchers = sa::win::probeLaunchers();
     launchers_->setRowCount(static_cast<int>(launchers.size()));
     for (int i = 0; i < static_cast<int>(launchers.size()); ++i) {
         const auto& l = launchers[static_cast<size_t>(i)];
         QStringList notes;
-        for (const auto& n : l.notes) notes << QString::fromStdString(n);
-        setRow(launchers_, i, {QString::fromStdString(l.name), l.installed ? T("yes") : T("no"), l.running ? T("yes") : T("no"),
-                               QString::fromStdString(l.detection), notes.join(" ")});
+        for (const auto& n : l.notes) notes << T((n).c_str());
+        setRow(launchers_, i, {T((l.name).c_str()), l.installed ? T("yes") : T("no"), l.running ? T("yes") : T("no"),
+                               T((l.detection).c_str()), notes.join(" ")});
         launchers_->item(i, 4)->setToolTip(notes.join("\n\n"));
     }
 
     summary_->setText(QString(T("Virtual output: <b>%1</b> · ViGEmBus %2 · HidHide %3 · %4 controller interface(s) found."))
                           .arg(app_->allowVirtualOutput() ? T("enabled in Settings") : T("disabled (safe preview only)"))
-                          .arg(QString::fromStdString(drv.vigemBus.state))
-                          .arg(QString::fromStdString(drv.hidHide.state))
+                          .arg(T((drv.vigemBus.state).c_str()))
+                          .arg(T((drv.hidHide.state).c_str()))
                           .arg(hids.size()));
 }
 
@@ -243,12 +243,14 @@ QString CompatPage::buildReport() const {
         }
         return md;
     };
-    QString md = "# StickyAim Lab compatibility report\n\nGenerated " + QDateTime::currentDateTime().toString(Qt::ISODate) +
-                 "\n\nAutomatically detected facts and user-recorded checklist results. Checklist entries marked Untested were not tested.\n\n";
-    md += "## XInput slots\n\n" + tableToMd(xinput_);
-    md += "\n## HID interfaces\n\n" + tableToMd(hid_);
-    md += "\n## Drivers\n\n" + tableToMd(drivers_);
-    md += "\n## Launchers\n\n" + tableToMd(launchers_);
-    md += "\n## Manual checklist (user results)\n\n" + tableToMd(checklist_);
+    QString md = "# " + T("Upgrade Aim compatibility report") + "\n\n" + T("Generated ") +
+                 QDateTime::currentDateTime().toString(Qt::ISODate) + "\n\n" +
+                 T("Automatically detected facts and user-recorded checklist results. Checklist entries marked Untested were not tested.") +
+                 "\n\n";
+    md += "## " + T("XInput slots") + "\n\n" + tableToMd(xinput_);
+    md += "\n## " + T("HID interfaces") + "\n\n" + tableToMd(hid_);
+    md += "\n## " + T("Drivers") + "\n\n" + tableToMd(drivers_);
+    md += "\n## " + T("Launchers") + "\n\n" + tableToMd(launchers_);
+    md += "\n## " + T("Manual checklist (user results)") + "\n\n" + tableToMd(checklist_);
     return md;
 }

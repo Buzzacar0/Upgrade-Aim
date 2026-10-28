@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(StickyAimLab
+project(UpgradeAim
     VERSION 0.1.0
-    DESCRIPTION "Controller input-processing lab for Windows"
+    DESCRIPTION "Upgrade Aim: laboratorio de entrada de controle para Windows"
     LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -51,4 +51,4 @@ if(STICKYAIM_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-install(DIRECTORY profiles devices DESTINATION share/stickyaim)
+install(DIRECTORY profiles devices DESTINATION share/upgradeaim)

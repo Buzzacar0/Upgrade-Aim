@@ -1,14 +1,14 @@
 {
-  "name": "Generic XInput controller",
+  "name": "Controle XInput genérico",
   "vendor_id": "045E",
   "modes": [
-    { "product_id": "028E", "mode": "Xbox 360 Controller (wired)", "connection": "USB", "verification": "" },
+    { "product_id": "028E", "mode": "Controle Xbox 360 (com fio)", "connection": "USB", "verification": "" },
     { "product_id": "02FF", "mode": "Xbox One / Series (xinputhid)", "connection": "USB", "verification": "" },
-    { "product_id": "0B12", "mode": "Xbox Series X|S Controller", "connection": "USB", "verification": "" }
+    { "product_id": "0B12", "mode": "Controle Xbox Series X|S", "connection": "USB", "verification": "" }
   ],
   "notes": [
-    "Any controller that appears in an XInput slot works with the XInput source without a device file.",
-    "Device files only add names, notes and an optional HID mapping for the Raw Input source."
+    "Qualquer controle que apareça num slot XInput funciona com a fonte XInput, sem precisar de arquivo de dispositivo.",
+    "Os arquivos de dispositivo só adicionam nomes, notas e um mapeamento HID opcional para a fonte Raw Input."
   ],
-  "unverified": ["No Microsoft controller was tested during development."]
+  "unverified": ["Nenhum controle da Microsoft foi testado durante o desenvolvimento."]
 }

@@ -1,16 +1,16 @@
 {
-  "name": "Vendor Model",
+  "name": "Fabricante Modelo",
   "vendor_id": "XXXX",
   "modes": [
     {
       "product_id": "YYYY",
-      "mode": "e.g. DirectInput / Android",
+      "mode": "ex.: DirectInput / Android",
       "connection": "USB / 2.4 GHz / Bluetooth",
-      "verification": "What you actually observed (date, OS build, tool output). Leave empty if not observed."
+      "verification": "O que você realmente observou (data, versão do Windows, saída da ferramenta). Deixe vazio se não observou."
     }
   ],
-  "notes": ["Facts you measured."],
-  "unverified": ["Claims you could not measure."],
+  "notes": ["Fatos que você mediu."],
+  "unverified": ["Afirmações que você não conseguiu medir."],
   "hid_mapping": {
     "preset": "generic",
     "lx": "X", "ly": "-Y", "rx": "Z", "ry": "-Rz", "lt": "Rx", "rt": "Ry",

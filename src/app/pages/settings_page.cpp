@@ -28,11 +28,11 @@ const char* kRiskText =
     "Before enabling it, understand that:\n"
     "• Many online games, including Call of Duty, prohibit unauthorized software or devices that modify controller input. "
     "Activision's RICOCHET anti-cheat targets input-modifying devices (e.g. Cronus Zen, XIM) and in 2026 announced "
-    "detections based on input timing and patterns. Using this output in online play can put your account at risk of a ban. StickyAim does not and will "
+    "detections based on input timing and patterns. Using this output in online play can put your account at risk of a ban. Upgrade Aim does not and will "
     "not attempt to hide itself from anti-cheat software.\n"
     "• It requires the ViGEmBus driver, which you install yourself. Its project was retired in 2023 and receives no updates.\n"
     "• Without hiding the physical controller (e.g. HidHide), the game may receive BOTH controllers (double input).\n"
-    "• StickyAim never changes the game's own aim assist. Any improvement must be measured, not assumed.\n\n"
+    "• Upgrade Aim never changes the game's own aim assist. Any improvement must be measured, not assumed.\n\n"
     "Safer alternatives: use the Stick Lab and Testing pages to find values, then enter them in the game's own controller "
     "settings or in the controller manufacturer's official software.\n\n"
     "Enable virtual controller output?";
@@ -184,8 +184,8 @@ void SettingsPage::refresh() {
     const auto drv = sa::win::probeDrivers();
     QString status = QString(T("ViGEm client compiled in: %1 · ViGEmBus driver: %2 · HidHide: %3"))
                          .arg(sa::win::ViGEmX360Sink::isCompiledIn() ? T("yes") : T("no"))
-                         .arg(QString::fromStdString(drv.vigemBus.state))
-                         .arg(QString::fromStdString(drv.hidHide.state));
+                         .arg(T((drv.vigemBus.state).c_str()))
+                         .arg(T((drv.hidHide.state).c_str()));
     if (app_->output() == AppController::OutputKind::ViGEm && app_->engineRunning()) {
         status += QString(T("<br><b style='color:#FF9F0A'>Virtual controller active.</b>"));
     }

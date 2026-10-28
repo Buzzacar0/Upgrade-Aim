@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
-  "name": "Tarantula 8K - Baseline (A/B reference)",
-  "description": "Minimal processing: small radial deadzone, linear response, no smoothing. Use as the 'B' side of A/B comparisons. Deadzone values are starting points: run Stick Lab > Rest calibration on YOUR controller and use the measured recommendation.",
+  "name": "Tarantula 8K - Rastreio suave",
+  "description": "Suavização adaptativa leve (One Euro) com bypass de flick, curva exponencial no ADS e faixa rápida perto da borda. A suavização adiciona um atraso mensurável em movimentos lentos (veja docs/BENCHMARKS.md: 12-13 ms nos testes de rastreio 1 Hz e microajuste). O ruído em repouso medido no Tarantula 8K é pequeno, então compare com o perfil Precisão antes de ficar com este. Os valores de deadzone são pontos de partida: rode a calibração em repouso no Lab. do analógico com o SEU controle e use a recomendação medida.",
   "target_device": "GameSir Tarantula 8K",
   "hip": {
     "deadzone": {
       "type": "radial",
-      "inner": 0.04,
+      "inner": 0.05,
       "outer": 0.97
     },
     "curve_mode": "radial",
     "radial": {
       "curve": {
-        "type": "linear",
+        "type": "exponential",
         "exponent": 1.0,
-        "k": 0.0,
+        "k": 1.2,
         "points": []
       },
       "fine": {
@@ -25,10 +25,10 @@
         "blend": 0.08
       },
       "fast": {
-        "enabled": false,
-        "start": 0.8,
+        "enabled": true,
+        "start": 0.85,
         "end": 1.0,
-        "gain": 1.6,
+        "gain": 1.5,
         "blend": 0.08
       }
     },
@@ -79,12 +79,12 @@
     "sens_x": 1.0,
     "sens_y": 1.0,
     "smoothing": {
-      "type": "none",
+      "type": "one_euro",
       "ema_tau_ms": 4.0,
-      "min_cutoff_hz": 3.0,
-      "beta": 0.05,
+      "min_cutoff_hz": 12.0,
+      "beta": 1.0,
       "d_cutoff_hz": 10.0,
-      "flick_bypass_speed": 0.0
+      "flick_bypass_speed": 12.0
     },
     "circular_saturation": true,
     "anti_deadzone": 0.0
@@ -92,23 +92,23 @@
   "ads": {
     "deadzone": {
       "type": "radial",
-      "inner": 0.04,
+      "inner": 0.05,
       "outer": 0.97
     },
     "curve_mode": "radial",
     "radial": {
       "curve": {
-        "type": "linear",
+        "type": "exponential",
         "exponent": 1.0,
-        "k": 0.0,
+        "k": 1.8,
         "points": []
       },
       "fine": {
-        "enabled": false,
+        "enabled": true,
         "start": 0.0,
-        "end": 0.25,
-        "gain": 0.6,
-        "blend": 0.08
+        "end": 0.18,
+        "gain": 0.75,
+        "blend": 0.06
       },
       "fast": {
         "enabled": false,
@@ -165,12 +165,12 @@
     "sens_x": 1.0,
     "sens_y": 1.0,
     "smoothing": {
-      "type": "none",
+      "type": "one_euro",
       "ema_tau_ms": 4.0,
-      "min_cutoff_hz": 3.0,
-      "beta": 0.05,
+      "min_cutoff_hz": 12.0,
+      "beta": 1.0,
       "d_cutoff_hz": 10.0,
-      "flick_bypass_speed": 0.0
+      "flick_bypass_speed": 12.0
     },
     "circular_saturation": true,
     "anti_deadzone": 0.0
@@ -178,7 +178,7 @@
   "ads_from_left_trigger": true,
   "ads_enter": 0.15,
   "ads_exit": 0.08,
-  "context_transition_ms": 0.0,
+  "context_transition_ms": 8.0,
   "move_stick": {
     "type": "radial",
     "inner": 0.05,

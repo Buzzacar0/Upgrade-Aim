@@ -94,13 +94,13 @@ AppController::AppController(QObject* parent) : QObject(parent) {
             break;
         }
 
-    // Initial profile: last used, else the shipped baseline, else defaults.
+    // Initial profile: last used, else the shipped base profile, else defaults.
     const QString last = q(settings_.value("last_profile", std::string()));
     bool loaded = false;
     if (!last.isEmpty() && QFileInfo::exists(last)) loaded = loadProfileFile(last, nullptr);
     if (!loaded) {
         for (const auto& p : profileLibrary())
-            if (p.contains("baseline")) {
+            if (QFileInfo(p).completeBaseName() == "tarantula8k_base") {
                 loaded = loadProfileFile(p, nullptr);
                 break;
             }

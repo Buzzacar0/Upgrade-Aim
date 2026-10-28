@@ -1,4 +1,4 @@
-// stickyaim-cli — command-line diagnostics for StickyAim Lab.
+// upgradeaim-cli — command-line diagnostics for Upgrade Aim.
 //
 // Every number printed here is measured on this machine at run time. Nothing
 // is assumed from device specifications.
@@ -72,7 +72,7 @@ Args parse(int argc, char** argv) {
 
 void usage() {
     std::puts(
-        "StickyAim Lab CLI\n"
+        "Upgrade Aim CLI\n"
         "\n"
         "  devices                         controllers (XInput + HID), known-device matches, launchers, drivers\n"
         "  measure  [--slot N] [--seconds S] [--mode spin|hybrid|timer] [--interval US]\n"
@@ -88,7 +88,7 @@ void usage() {
         "  run      --profile FILE [--slot N] [--seconds S] [--output preview|vigem] [--confirm-injection]\n"
         "                                  run the engine; preview never injects. vigem requires --confirm-injection.\n"
         "\n"
-        "Profiles: see the 'profiles' folder. Logs: %APPDATA%\\StickyAimLab\\logs.\n");
+        "Profiles: see the 'profiles' folder. Logs: %APPDATA%\\UpgradeAim\\logs.\n");
 }
 
 std::string devicesDir() { return win::findDataDir("devices", STICKYAIM_SOURCE_DIR); }

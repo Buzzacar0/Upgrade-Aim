@@ -61,7 +61,7 @@ MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent
     brandText->setSpacing(0);
     auto* brand = new QLabel("Upgrade Aim");
     brand->setObjectName("brand");
-    auto* brandSub = new QLabel("StickyAim Lab");
+    auto* brandSub = new QLabel(T("Aim lab"));
     brandSub->setObjectName("brandSub");
     brandText->addWidget(brand);
     brandText->addWidget(brandSub);

@@ -53,10 +53,18 @@ std::string executableDir() {
 std::string userDataDir() {
     PWSTR roaming = nullptr;
     std::filesystem::path dir;
-    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming))) dir = std::filesystem::path(roaming) / L"StickyAimLab";
+    std::filesystem::path legacy;
+    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &roaming))) {
+        dir = std::filesystem::path(roaming) / L"UpgradeAim";
+        legacy = std::filesystem::path(roaming) / L"StickyAimLab";  // folder name before the rename to Upgrade Aim
+    }
     if (roaming) CoTaskMemFree(roaming);
     if (dir.empty()) dir = std::filesystem::path(fromUtf8(executableDir())) / L"userdata";
     std::error_code ec;
+    // One-time migration: copy settings, calibration, profiles and logs from
+    // the old folder. The old folder is left untouched.
+    if (!legacy.empty() && !std::filesystem::exists(dir, ec) && std::filesystem::is_directory(legacy, ec))
+        std::filesystem::copy(legacy, dir, std::filesystem::copy_options::recursive, ec);
     std::filesystem::create_directories(dir, ec);
     return toUtf8(dir.wstring());
 }
@@ -65,7 +73,7 @@ std::string findDataDir(const std::string& name, const std::string& sourceDirHin
     namespace fs = std::filesystem;
     const fs::path exe(fromUtf8(executableDir()));
     const fs::path wname(fromUtf8(name));
-    std::vector<fs::path> candidates = {exe / wname, exe / L".." / L"share" / L"stickyaim" / wname};
+    std::vector<fs::path> candidates = {exe / wname, exe / L".." / L"share" / L"upgradeaim" / wname};
     if (!sourceDirHint.empty()) candidates.push_back(fs::path(fromUtf8(sourceDirHint)) / wname);
     for (const auto& c : candidates) {
         std::error_code ec;

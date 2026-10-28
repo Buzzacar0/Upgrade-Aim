@@ -1,59 +1,59 @@
-# Testing
+# Testes
 
-## Automated tests
+## Testes automáticos
 
 ```bash
 ctest --preset release
 ```
 
-82 tests in two executables. All passed on 2026-10-27.
+São 82 testes em dois executáveis. Todos passaram em 27/10/2026.
 
-| Area (requirement) | Tests |
+| Área (requisito) | Testes |
 | --- | --- |
-| Curve monotonicity and boundary conditions | `Curve.*` (all curve types, 10,000-point sweeps, NaN and out-of-domain inputs, custom-point sanitizing), `ResponseLut.*` (monotone and bounded for 16 fine/fast band combinations, zone continuity) |
-| Deadzone behaviour | `Deadzone.*` (radial, axial, none; exact thresholds; continuity at the inner edge; outer saturation; validation) |
-| Axis symmetry | `Pipeline.AxisSymmetry`, `Deadzone.SymmetricInAllQuadrants` (bit-exact ±X, ±Y and X↔Y) |
-| Saturation and normalization | `Normalization.ExtremesAndSymmetry` (lossless int16 round trip, −32768 handling, NaN), `Pipeline.SensitivityAndCircularSaturation`, `Pipeline.OutputAlwaysWithinRange` |
-| Input noise and drift | `RestAnalysis.*` (offset, noise and jitter estimates; the recommended deadzone suppresses 100 % of rest samples with and without center calibration; drift flag), `RangeAnalysis.*`, `DriftMonitor.*`, `Analysis.DeadzoneSuppressesRestNoise` |
-| Sampling jitter | `Timing.MeasuresIntervalAndJitter` (√2·σ interval jitter), `Timing.DetectsDroppedSamplesAndGaps`, `Timing.NoNominalRateAssumed` |
-| Device disconnection | `Engine.DisconnectNeutralizesOutputAndReconnects`, `Engine.StartsWithoutDeviceAndWaits` |
-| Configuration persistence | `Config.*` (lossless JSON round trip, atomic save, tolerant load, rejection of bad files, shipped profiles load and compile), `DeviceDb.*`, `Recording.CsvRoundTrip` |
-| Processing latency under load | `Latency.ProcessingCostUnderLoad` (all cores saturated), `Analysis.StaticProcessingAddsNoLatency`, `Analysis.SmoothingLagIsMeasured` (EMA lag = τ·ln2 ± 1 sample) |
-| Engine behaviour | profile application, pass-through, panic combo, missed-packet counting, profile hot-swap under load (300 swaps while feeding input), telemetry timing, real-time replay |
-| Smoothing | identity when off, EMA time constant and sample-rate independence, One Euro adaptivity, flick bypass, re-seeding on gaps and non-monotonic time |
-| Determinism | `Pipeline.DeterministicForIdenticalInput` (bit-identical output with smoothing, crossfade, noise and timing jitter) |
+| Monotonicidade das curvas e casos de borda | `Curve.*` (todos os tipos de curva, varreduras de 10.000 pontos, entradas NaN e fora do domínio, saneamento dos pontos personalizados), `ResponseLut.*` (monotônica e limitada em 16 combinações de faixas fina e rápida, continuidade entre faixas) |
+| Comportamento da deadzone | `Deadzone.*` (radial, axial, nenhuma; limites exatos; continuidade na borda interna; saturação externa; validação) |
+| Simetria entre eixos | `Pipeline.AxisSymmetry`, `Deadzone.SymmetricInAllQuadrants` (idêntico bit a bit em ±X, ±Y e X↔Y) |
+| Saturação e normalização | `Normalization.ExtremesAndSymmetry` (ida e volta int16 sem perda, tratamento de −32768, NaN), `Pipeline.SensitivityAndCircularSaturation`, `Pipeline.OutputAlwaysWithinRange` |
+| Ruído e drift da entrada | `RestAnalysis.*` (estimativas de desvio, ruído e variação; a deadzone recomendada suprime 100 % das amostras em repouso, com e sem calibração de centro; aviso de drift), `RangeAnalysis.*`, `DriftMonitor.*`, `Analysis.DeadzoneSuppressesRestNoise` |
+| Variação no tempo entre amostras | `Timing.MeasuresIntervalAndJitter` (variação do intervalo de √2·σ), `Timing.DetectsDroppedSamplesAndGaps`, `Timing.NoNominalRateAssumed` |
+| Desconexão do controle | `Engine.DisconnectNeutralizesOutputAndReconnects`, `Engine.StartsWithoutDeviceAndWaits` |
+| Persistência da configuração | `Config.*` (ida e volta JSON sem perda, gravação atômica, carregamento tolerante, rejeição de arquivos ruins, perfis de exemplo carregam e compilam), `DeviceDb.*`, `Recording.CsvRoundTrip` |
+| Latência do processamento sob carga | `Latency.ProcessingCostUnderLoad` (todos os núcleos ocupados), `Analysis.StaticProcessingAddsNoLatency`, `Analysis.SmoothingLagIsMeasured` (atraso do EMA = τ·ln2 ± 1 amostra) |
+| Comportamento do motor | aplicação de perfil, pass-through, combo de pânico, contagem de pacotes perdidos, troca de perfil sob carga (300 trocas recebendo entrada), tempo da telemetria, reprodução em tempo real |
+| Suavização | identidade quando desligada, constante de tempo do EMA e independência da taxa de amostragem, adaptação do One Euro, bypass de flick, reinício em lacunas e em tempo não monotônico |
+| Determinismo | `Pipeline.DeterministicForIdenticalInput` (saída idêntica bit a bit com suavização, transição, ruído e variação de tempo) |
 
-## Comparing the raw and processed controller
+## Comparando o controle original com o processado
 
-Keep two kinds of evidence apart:
+Separe dois tipos de evidência:
 
-- **Objective**: what the processing does to the signal (lag, gain, noise passed through, resolution, smoothness, saturation). It is measured by StickyAim and is repeatable.
-- **Subjective**: how aiming feels or performs in a game. It is affected by the game's own processing and aim assist, by learning effects and by expectation. It can only be estimated with controlled trials.
+- **Objetiva**: o que o processamento faz com o sinal (atraso, ganho, ruído que passa, resolução, suavidade, saturação). É medida pelo Upgrade Aim e se repete.
+- **Subjetiva**: como a mira parece ou rende no jogo. Ela é afetada pelo processamento e pelo aim assist do próprio jogo, pelo aprendizado e pela expectativa. Só dá para estimar com testes controlados.
 
-### A. Objective comparison (repeatable)
+### A. Comparação objetiva (repetível)
 
-1. Testing → Synthetic comparison → choose the baseline "Raw controller (no processing)" (or another profile) → Run. The signals are seeded, so the same profile always gives identical numbers.
-2. Testing → Live capture: pick a movement type, perform it, and the same recording is replayed through the active profile and the baseline. This isolates the profile's effect from variation in your hand.
-3. Latency Lab: check that sample interval, missed packets and processing time are unchanged between profiles. Processing cost does not depend much on the profile (87–92 ns measured).
-4. Export the JSON report.
+1. Testes → Comparação sintética → escolha a referência "Controle original (sem processamento)" (ou outro perfil) → Rodar. Os sinais são gerados com semente fixa, então o mesmo perfil sempre dá os mesmos números.
+2. Testes → Captura ao vivo: escolha um tipo de movimento, faça o movimento, e a mesma gravação é repassada pelo perfil ativo e pela referência. Isso isola o efeito do perfil da variação da sua mão.
+3. Lab. de latência: confira que o intervalo entre amostras, os pacotes perdidos e o tempo de processamento não mudam entre perfis. O custo de processamento quase não depende do perfil (87–92 ns medidos).
+4. Exporte o relatório em JSON.
 
-What to look for:
+O que observar:
 
-| Goal | Metric |
+| Objetivo | Métrica |
 | --- | --- |
-| No drift or rest jitter reaching the game | rest_noise output RMS = 0, non-zero fraction = 0 |
-| Finer micro-corrections | micro_adjust gain below 1 with output levels still high (resolution not lost) |
-| No added delay | added lag 0 ms on step, tracking and flick tests; any value > 0 comes from smoothing |
-| Smoother output | lower jerk RMS, but only together with acceptable added lag |
-| Full speed still reachable | step_100 / full_circle gain 1.000 |
+| Sem drift ou variação em repouso chegando ao jogo | RMS da saída em ruído em repouso = 0, fração não zero = 0 |
+| Microcorreções mais finas | ganho no microajuste abaixo de 1 com muitos níveis de saída (sem perder resolução) |
+| Sem atraso adicionado | atraso adicionado de 0 ms nos testes de degrau, rastreio e flick; qualquer valor > 0 vem da suavização |
+| Saída mais suave | RMS de jerk menor, mas só junto com um atraso aceitável |
+| Velocidade máxima ainda alcançável | ganho 1,000 nos testes degrau 100 % e círculo completo |
 
-### B. Subjective comparison (blind A/B, in a private or offline mode)
+### B. Comparação subjetiva (A/B às cegas, num modo privado ou offline)
 
-1. Pick two profiles, A and B (for example *Baseline* and *Precision*). Map them to Ctrl+Alt+1 and Ctrl+Alt+2 by their order in the profile list.
-2. Have someone else switch profiles between rounds without telling you which is active (Dashboard → profile list, or the hotkeys). If no one is available, use a die roll and only check the profile afterwards.
-3. Use a fixed, repeatable drill: same map, same targets, same weapon and attachments, same in-game sensitivity, at least 10 rounds per profile, in alternating random order.
-4. Record per round: profile (filled in afterwards), a 1–5 rating, and an objective in-game measure if available (time to kill a fixed target, hits out of N shots).
-5. Write conditions and results into Testing → Subjective notes and export. The report keeps them separate from the measurements.
-6. Only conclude that a profile is better if the difference is consistent across rounds and larger than the round-to-round spread.
+1. Escolha dois perfis, A e B (por exemplo *Base* e *Precisão*). Eles ficam nos atalhos Ctrl+Alt+1 e Ctrl+Alt+2 conforme a ordem na lista de perfis.
+2. Peça para outra pessoa trocar o perfil entre as rodadas sem te contar qual está ativo (lista de perfis do Painel ou atalhos). Se ninguém puder ajudar, sorteie com um dado e só confira o perfil depois.
+3. Use um treino fixo e repetível: mesmo mapa, mesmos alvos, mesma arma e acessórios, mesma sensibilidade no jogo, pelo menos 10 rodadas por perfil, em ordem alternada aleatória.
+4. Anote por rodada: o perfil (preenchido depois), uma nota de 1 a 5 e uma medida objetiva do jogo, se houver (tempo para abater um alvo fixo, acertos em N tiros).
+5. Escreva as condições e os resultados em Testes → Notas subjetivas e exporte. O relatório mantém essas notas separadas das medições.
+6. Só conclua que um perfil é melhor se a diferença for consistente entre as rodadas e maior que a variação de uma rodada para outra.
 
-The game's own deadzone and response-curve settings stack with StickyAim's. For comparisons with virtual output, set the game to its minimum deadzone and a linear curve if possible, and keep it unchanged between A and B.
+As configurações de deadzone e curva do próprio jogo se somam às do Upgrade Aim. Nas comparações com saída virtual, deixe o jogo com a menor deadzone e com curva linear, se possível, e não mude isso entre A e B.

@@ -151,7 +151,7 @@ void TestingPage::showComparison(const std::vector<std::pair<QString, sa::Compar
             const auto& r = rep.tests[t];
             const int row = table_->rowCount();
             table_->insertRow(row);
-            const QStringList cells = {QString::fromStdString(r.name),
+            const QStringList cells = {T((r.name).c_str()),
                                        label,
                                        ui::fmt(r.addedLagMs, 2),
                                        ui::fmt(r.gainRatio, 3),
@@ -161,7 +161,7 @@ void TestingPage::showComparison(const std::vector<std::pair<QString, sa::Compar
                                        ui::fmt(r.procSaturatedFraction * 100, 1)};
             for (int c = 0; c < cells.size(); ++c) {
                 auto* item = new QTableWidgetItem(cells[c]);
-                item->setToolTip(QString::fromStdString(r.description));
+                item->setToolTip(T((r.description).c_str()));
                 table_->setItem(row, c, item);
             }
         }

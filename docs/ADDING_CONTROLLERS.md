@@ -1,45 +1,45 @@
-# Adding support for another controller
+# Como adicionar suporte a outro controle
 
-## 1. XInput controllers: nothing to do
+## 1. Controles XInput: não precisa fazer nada
 
-If the controller appears in an XInput slot (`stickyaim-cli devices` lists it under "XInput slots"), the XInput source already works. A device file only adds a name, notes and a HID mapping.
+Se o controle aparece num slot XInput (o `upgradeaim-cli devices` lista ele em "XInput slots"), a fonte XInput já funciona. Um arquivo de dispositivo só adiciona nome, notas e um mapeamento HID.
 
-## 2. Identify the device
-
-```bash
-stickyaim-cli devices
-```
-
-Note the `VID_xxxx PID_yyyy` of the gamepad/joystick interface, whether it is marked `[XInput HID view]`, and the product string. Different controller modes (XInput, DirectInput, Switch, wireless dongle) usually have different PIDs. List only those you observe.
-
-## 3. Measure it
+## 2. Identifique o dispositivo
 
 ```bash
-stickyaim-cli measure --seconds 10
+upgradeaim-cli devices
 ```
 
-Move the stick continuously. Record the XInput and HID rates and intervals.
+Anote o `VID_xxxx PID_yyyy` da interface gamepad/joystick, se ela está marcada como `[XInput HID view]` e o nome do produto. Modos diferentes do controle (XInput, DirectInput, Switch, receptor sem fio) normalmente têm PIDs diferentes. Liste só os que você observou.
+
+## 3. Meça o controle
 
 ```bash
-stickyaim-cli calibrate --rest 4 --range 6
+upgradeaim-cli measure --seconds 10
 ```
 
-Record rest offset and noise.
+Mexa o analógico sem parar. Anote as taxas e os intervalos do XInput e do HID.
 
-## 4. Write a device file
+```bash
+upgradeaim-cli calibrate --rest 4 --range 6
+```
 
-Copy `devices/TEMPLATE.json.txt` to `devices/<vendor>_<model>.json`:
+Anote o desvio e o ruído em repouso.
+
+## 4. Escreva um arquivo de dispositivo
+
+Copie `devices/TEMPLATE.json.txt` para `devices/<fabricante>_<modelo>.json`:
 
 ```json
 {
-  "name": "Vendor Model",
+  "name": "Fabricante Modelo",
   "vendor_id": "1234",
   "modes": [
     { "product_id": "ABCD", "mode": "DirectInput", "connection": "USB",
-      "verification": "Observed 2026-10-27 on Windows 11 26200: <what you saw, with numbers>" }
+      "verification": "Observado em 27/10/2026 no Windows 11 26200: <o que você viu, com números>" }
   ],
-  "notes": ["Facts you measured."],
-  "unverified": ["Claims you could not measure."],
+  "notes": ["Fatos que você mediu."],
+  "unverified": ["Afirmações que você não conseguiu medir."],
   "hid_mapping": {
     "preset": "generic",
     "lx": "X", "ly": "-Y", "rx": "Z", "ry": "-Rz", "lt": "Rx", "rt": "Ry",
@@ -50,30 +50,30 @@ Copy `devices/TEMPLATE.json.txt` to `devices/<vendor>_<model>.json`:
 }
 ```
 
-Rules:
+Regras:
 
-- Leave `verification` empty unless you actually observed that mode. Leave `"verified": false` on the mapping until every axis and button has been checked in the Dashboard.
-- Axis specs: `X Y Z Rx Ry Rz Slider Dial`, optional leading `-` to invert, optional trailing `+` or `-` to use only the positive or negative half of a centered axis (combined trigger axes). `none` disables the target.
-- Presets: `xinput_hid` (Windows' HID view of XInput pads: X/Y, Rx/Ry, Z = combined triggers) or `generic` (common DirectInput layout). Explicit keys override the preset.
-- Button names: `A B X Y LB RB Back Start LS RS Guide DpadUp DpadDown DpadLeft DpadRight`. Numbers are HID button usages (1-based).
+- Deixe `verification` vazio se você não observou aquele modo. Deixe `"verified": false` no mapeamento até conferir cada eixo e cada botão no Painel.
+- Eixos: `X Y Z Rx Ry Rz Slider Dial`, com `-` opcional na frente para inverter e `+` ou `-` opcional no final para usar só a metade positiva ou negativa de um eixo centrado (gatilhos combinados). `none` desativa o destino.
+- Presets: `xinput_hid` (a visão HID que o Windows cria para controles XInput: X/Y, Rx/Ry, Z = gatilhos combinados) ou `generic` (layout DirectInput comum). As chaves explícitas substituem o preset.
+- Nomes de botão: `A B X Y LB RB Back Start LS RS Guide DpadUp DpadDown DpadLeft DpadRight`. Os números são os usages de botão HID (começando em 1).
 
-## 5. Verify the mapping
+## 5. Confira o mapeamento
 
-1. Start the app → Dashboard → Input source → choose the HID entry for your device.
-2. Move each stick and trigger and press each button. Check the Dashboard sticks and Stick Lab plots: up must be +Y and right must be +X.
-3. If an axis is inverted or swapped, fix the spec and click "Rescan devices".
-4. When everything matches, set `"verified": true` and describe what you checked in `verification`.
+1. Abra o app → Painel → Fonte de entrada → escolha a entrada HID do seu dispositivo.
+2. Mexa cada analógico e gatilho e aperte cada botão. Confira os círculos do Painel e os gráficos do Lab. do analógico: para cima tem que ser +Y e para a direita +X.
+3. Se um eixo estiver invertido ou trocado, corrija a especificação e clique em "Procurar".
+4. Quando tudo estiver certo, mude para `"verified": true` e descreva em `verification` o que você conferiu.
 
-## 6. Add a test (optional but encouraged)
+## 6. Adicione um teste (opcional, mas recomendado)
 
-`tests/test_config.cpp` → `DeviceDb.ShippedDevicesLoad` shows how to assert that a device file loads and matches its VID/PID.
+`tests/test_config.cpp` → `DeviceDb.ShippedDevicesLoad` mostra como verificar que um arquivo de dispositivo carrega e reconhece o VID/PID.
 
-## 7. New source types
+## 7. Novos tipos de fonte
 
-To support a new API (for example GameInput), implement `sa::IInputSource` (`src/core/include/stickyaim/core/io.hpp`):
+Para suportar uma nova API (por exemplo GameInput), implemente `sa::IInputSource` (`src/core/include/stickyaim/core/io.hpp`):
 
-- `open()` returns false while the device is absent (the engine retries).
-- `poll()` must not block or allocate. Return `NewSample` only for new data, and fill `RawSample::sequence` if the API gives one (then return true from `hasDeviceSequence()`, so missed packets are counted).
-- Add it to `AppController::makeSource()`.
+- `open()` retorna false enquanto o dispositivo não estiver presente (o motor tenta de novo).
+- `poll()` não pode bloquear nem alocar memória. Retorne `NewSample` só para dados novos e preencha `RawSample::sequence` se a API tiver um contador (e então retorne true em `hasDeviceSequence()`, para os pacotes perdidos serem contados).
+- Adicione a fonte em `AppController::makeSource()`.
 
-The processing core, engine, telemetry and all pages work unchanged.
+O núcleo de processamento, o motor, a telemetria e todas as páginas funcionam sem mudanças.

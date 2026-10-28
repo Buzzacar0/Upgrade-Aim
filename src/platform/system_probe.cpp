@@ -130,9 +130,9 @@ std::vector<LauncherStatus> probeLaunchers() {
         s.notes = {
             "Steam Input is configured per game (Game > Properties > Controller). When enabled it reads the physical "
             "controller itself and presents its own virtual controller to the game.",
-            "Steam Input can also pick up the StickyAim virtual Xbox 360 pad. Test with Steam Input both enabled and "
+            "Steam Input can also pick up the Upgrade Aim virtual Xbox 360 pad. Test with Steam Input both enabled and "
             "disabled for the game and record which controller the game reacts to.",
-            "If Steam Input is enabled, its own deadzones/curves stack on top of StickyAim processing.",
+            "If Steam Input is enabled, its own deadzones/curves stack on top of Upgrade Aim processing.",
         };
         out.push_back(std::move(s));
     }

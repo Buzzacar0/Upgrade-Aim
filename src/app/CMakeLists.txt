@@ -3,7 +3,7 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Widgets)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-add_executable(StickyAimLab WIN32
+add_executable(UpgradeAim WIN32
     main.cpp
     resources/ui.qrc
     i18n.hpp i18n.cpp i18n_pt_br.cpp
@@ -25,12 +25,12 @@ add_executable(StickyAimLab WIN32
     pages/testing_page.cpp
     pages/settings_page.cpp)
 
-target_include_directories(StickyAimLab PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(StickyAimLab PRIVATE stickyaim::engine Qt6::Widgets dwmapi)
-target_compile_definitions(StickyAimLab PRIVATE STICKYAIM_SOURCE_DIR="${PROJECT_SOURCE_DIR}" QT_NO_KEYWORDS)
+target_include_directories(UpgradeAim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(UpgradeAim PRIVATE stickyaim::engine Qt6::Widgets dwmapi)
+target_compile_definitions(UpgradeAim PRIVATE STICKYAIM_SOURCE_DIR="${PROJECT_SOURCE_DIR}" QT_NO_KEYWORDS)
 if(MSVC)
     # Qt headers trigger C4251/C4127 noise under /W4.
-    target_compile_options(StickyAimLab PRIVATE /wd4251 /wd4127)
+    target_compile_options(UpgradeAim PRIVATE /wd4251 /wd4127)
 endif()
 
-install(TARGETS StickyAimLab RUNTIME DESTINATION bin)
+install(TARGETS UpgradeAim RUNTIME DESTINATION bin)

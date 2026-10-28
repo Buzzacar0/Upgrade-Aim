@@ -148,7 +148,7 @@ void LatencyPage::refresh() {
         const QStringList cells = {
             QString("%1 (%2:%3)").arg(QString::fromStdString(d.info.product), QString::fromStdString(sa::hex4(d.info.vendorId)),
                                       QString::fromStdString(sa::hex4(d.info.productId))),
-            QString::fromStdString(d.info.usageName()) + (d.info.xinputHidInterface ? T(" (XInput HID view)") : ""),
+            T((d.info.usageName()).c_str()) + (d.info.xinputHidInterface ? T(" (XInput HID view)") : ""),
             QString::number(d.reports),
             ui::fmt(d.timing.effectiveRateHz, 0),
             ui::fmt(d.timing.meanUs, 1),

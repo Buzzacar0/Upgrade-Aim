@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Configures, builds and tests StickyAim Lab from a plain PowerShell prompt.
+  Configura, compila e testa o Upgrade Aim a partir de um PowerShell comum.
 
 .DESCRIPTION
   Locates Visual Studio (Build Tools are enough) with vswhere, imports the x64
@@ -59,7 +59,7 @@ try {
         if ($LASTEXITCODE) { throw 'Tests failed' }
     }
     if ($Deploy -and $Preset -ne 'core') {
-        $exe = Join-Path $repo "build\$Preset\src\app\StickyAimLab.exe"
+        $exe = Join-Path $repo "build\$Preset\src\app\UpgradeAim.exe"
         & (Join-Path $QtRoot 'bin\windeployqt.exe') --no-translations --no-system-d3d-compiler $exe
     }
 }

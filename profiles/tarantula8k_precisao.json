@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "name": "Tarantula 8K - Custom S-curve",
-  "description": "User-defined curve: slow start for micro-corrections, steeper mid-range, gentle approach to the rim. Edit the points in Stick Lab. Deadzone values are starting points: run Stick Lab > Rest calibration on YOUR controller and use the measured recommendation.",
+  "name": "Tarantula 8K - Precisão",
+  "description": "Curvas levemente convexas para mais controle em movimentos pequenos; o ADS adiciona uma faixa de ajuste fino. Sem suavização (zero de atraso adicionado). Os valores de deadzone são pontos de partida: rode a calibração em repouso no Lab. do analógico com o SEU controle e use a recomendação medida.",
   "target_device": "GameSir Tarantula 8K",
   "hip": {
     "deadzone": {
@@ -12,27 +12,10 @@
     "curve_mode": "radial",
     "radial": {
       "curve": {
-        "type": "custom",
-        "exponent": 1.0,
+        "type": "power",
+        "exponent": 1.3,
         "k": 0.0,
-        "points": [
-          [
-            0.15,
-            0.06
-          ],
-          [
-            0.4,
-            0.3
-          ],
-          [
-            0.7,
-            0.72
-          ],
-          [
-            0.9,
-            0.95
-          ]
-        ]
+        "points": []
       },
       "fine": {
         "enabled": false,
@@ -115,34 +98,17 @@
     "curve_mode": "radial",
     "radial": {
       "curve": {
-        "type": "custom",
-        "exponent": 1.0,
+        "type": "power",
+        "exponent": 1.6,
         "k": 0.0,
-        "points": [
-          [
-            0.15,
-            0.06
-          ],
-          [
-            0.4,
-            0.3
-          ],
-          [
-            0.7,
-            0.72
-          ],
-          [
-            0.9,
-            0.95
-          ]
-        ]
+        "points": []
       },
       "fine": {
-        "enabled": false,
+        "enabled": true,
         "start": 0.0,
-        "end": 0.25,
-        "gain": 0.6,
-        "blend": 0.08
+        "end": 0.2,
+        "gain": 0.7,
+        "blend": 0.06
       },
       "fast": {
         "enabled": false,
@@ -196,8 +162,8 @@
         "blend": 0.08
       }
     },
-    "sens_x": 0.95,
-    "sens_y": 0.9,
+    "sens_x": 1.0,
+    "sens_y": 1.0,
     "smoothing": {
       "type": "none",
       "ema_tau_ms": 4.0,

@@ -1,90 +1,92 @@
-# Architecture
+# Arquitetura
 
-## Layers
+## Camadas
 
 ```
-            ┌──────────────────────── Qt UI (src/app) ─────────────────────────┐
-            │ pages, curve editor, plots   ◄── telemetry (SPSC queue, 64k) ──┐ │
+            ┌──────────────────────── Interface Qt (src/app) ──────────────────┐
+            │ páginas, editor de curva, gráficos ◄── telemetria (fila SPSC, 64k) ┐
             └──────────────┬──────────────────────────────────────────────────┘ │
-       publishProfile()    │ (pointer swap)                                    │
+       publishProfile()    │ (troca de ponteiro)                               │
                            ▼                                                   │
- ┌──────────────┐   ┌───────────────────── Engine thread (src/engine) ────────┴──┐   ┌──────────────┐
- │ IInputSource │──►│ pace → poll → [panic combo] → Processor::process → submit  │──►│ IOutputSink  │
- │  XInput      │   │ disconnect → neutral output → reconnect loop                │   │  Preview     │
+ ┌──────────────┐   ┌───────────────────── Thread do motor (src/engine) ──────┴──┐   ┌──────────────┐
+ │ IInputSource │──►│ ritmo → leitura → [combo de pânico] → process → envio     │──►│ IOutputSink  │
+ │  XInput      │   │ desconexão → saída neutra → tentativa de reconexão         │   │  Preview     │
  │  HID (Raw In)│   └─────────────────────────────────────────────────────────────┘   │  ViGEm X360  │
  │  Replay/Demo │                                                                       └──────────────┘
  └──────────────┘
-                 Processing core (src/core): portable C++20, no OS calls, fully unit-tested
+                 Núcleo de processamento (src/core): C++20 portável, sem chamadas ao sistema, com testes unitários
 ```
 
-- **Acquisition** (`IInputSource`) only reads and timestamps.
-- **Processing** (`Processor`, `CompiledProfile`) is pure computation on samples and timestamps.
-- **Delivery** (`IOutputSink`) only writes. Preview is the default and the only sink that cannot affect another program.
+- **Leitura** (`IInputSource`) só lê e carimba o tempo.
+- **Processamento** (`Processor`, `CompiledProfile`) é só cálculo sobre amostras e carimbos de tempo.
+- **Envio** (`IOutputSink`) só escreve. A pré-visualização é o padrão e a única saída que não afeta outro programa.
 
-The launcher-specific part is not in the processing path at all: Steam, Battle.net and the Xbox app read whichever controller Windows exposes. They are handled by probes and documentation (`system_probe.cpp`, [COMPATIBILITY.md](COMPATIBILITY.md)), not by separate engines.
+A parte específica de cada launcher nem passa pelo processamento: Steam, Battle.net e o app Xbox leem o controle que o Windows mostrar. Eles são tratados por detecção e documentação (`system_probe.cpp`, [COMPATIBILITY.md](COMPATIBILITY.md)), e não por motores separados.
 
-## Processing pipeline (aim stick)
+## Pipeline de processamento (analógico de mira)
 
-| Stage | Module | Notes |
+| Etapa | Módulo | Notas |
 | --- | --- | --- |
-| Normalize | `types.cpp` | int16 → [-1, 1] symmetric; −32768 clamps to −1 |
-| Calibration | `calibration.cpp` | subtract measured center, rescale each half-axis to its measured extreme |
-| Smoothing (optional) | `smoothing.cpp` | None / EMA (dt-exact) / One Euro; flick bypass above a stick speed; re-seeds on gaps > 100 ms |
-| Deadzone | `deadzone.cpp` | None / Radial / Axial; inner and outer thresholds, linear rescale between them (no lost range) |
-| Response | `response.cpp`, `curve.cpp` | curve + fine/fast slope bands compiled into a 4097-entry LUT |
-| Sensitivity | `pipeline.cpp` | separate X/Y gains |
-| Saturation | `pipeline.cpp` | circular (|v| ≤ 1) or per-axis |
-| Anti-deadzone | `pipeline.cpp` | optional minimum output, to cancel a game deadzone that cannot be set to zero |
+| Normalização | `types.cpp` | int16 → [-1, 1] simétrico; −32768 vira −1 |
+| Calibração | `calibration.cpp` | subtrai o centro medido e reescala cada meio-eixo até o extremo medido |
+| Suavização (opcional) | `smoothing.cpp` | Nenhuma / EMA (exata em dt) / One Euro; bypass de flick acima de uma velocidade do analógico; reinicia em lacunas > 100 ms |
+| Deadzone | `deadzone.cpp` | Nenhuma / Radial / Axial; limites interno e externo, reescala linear entre eles (sem perder alcance) |
+| Resposta | `response.cpp`, `curve.cpp` | curva + faixas fina e rápida compiladas numa tabela (LUT) de 4097 entradas |
+| Sensibilidade | `pipeline.cpp` | ganhos X e Y separados |
+| Saturação | `pipeline.cpp` | circular (|v| ≤ 1) ou por eixo |
+| Anti-deadzone | `pipeline.cpp` | saída mínima opcional, para anular uma deadzone do jogo que não dá para zerar |
 
-Contexts: hip-fire and ADS each have a complete configuration. ADS is entered at LT ≥ `adsEnter` and left at LT ≤ `adsExit`. An optional crossfade blends the two responses over `contextTransitionMs`.
+Contextos: hip-fire e ADS têm cada um uma configuração completa. O ADS entra com LT ≥ `adsEnter` e sai com LT ≤ `adsExit`. Uma transição gradual opcional mistura as duas respostas durante `contextTransitionMs`.
 
-The movement stick gets calibration and a radial deadzone. Triggers get thresholds. Buttons pass through.
+O analógico de movimento recebe calibração e deadzone radial. Os gatilhos recebem limites. Os botões passam direto.
 
-### Why a LUT with integrated slope bands
+### Por que uma LUT com as faixas integradas
 
-Fine and fast bands are defined as **slope multipliers** over a magnitude range. The LUT is the normalized integral of (curve slope × band multiplier), so:
+As faixas fina e rápida são definidas como **multiplicadores de inclinação** sobre um intervalo de magnitude. A LUT é a integral normalizada de (inclinação da curva × multiplicador da faixa), então:
 
-- it is monotone by construction (all multipliers are positive);
-- full deflection still maps to full output (normalization), so a fine band never costs top-end turn speed;
-- evaluation is one multiply, one truncation and one lerp, so it is deterministic and allocation-free.
+- ela é monotônica por construção (todos os multiplicadores são positivos);
+- a deflexão total continua chegando na saída total (normalização), então uma faixa fina nunca custa velocidade máxima de giro;
+- a avaliação é uma multiplicação, um truncamento e uma interpolação, então é determinística e não aloca memória.
 
-The tests check monotonicity over 20,000 points for many band combinations.
+Os testes conferem a monotonicidade em 20.000 pontos para várias combinações de faixas.
 
-### Why Fritsch–Carlson for custom curves
+### Por que Fritsch–Carlson nas curvas personalizadas
 
-User-defined points are sanitized (sorted, clipped, made non-decreasing) and interpolated with a monotone cubic Hermite spline. Unlike a plain cubic spline, it cannot overshoot, so a custom curve can never reverse direction.
+Os pontos definidos pelo usuário são saneados (ordenados, limitados e tornados não decrescentes) e interpolados com uma spline cúbica de Hermite monotônica. Diferente de uma spline cúbica comum, ela não ultrapassa os pontos, então uma curva personalizada nunca inverte de direção.
 
-## Real-time engine
+## Motor em tempo real
 
-- One dedicated thread, MMCSS "Games" priority (fallback: `THREAD_PRIORITY_HIGHEST`).
-- Pacing: `Spin`, `Hybrid` (high-resolution waitable timer, then spin for the last ≤150 µs) or `Timer`. Default is Hybrid at 125 µs. At 250 µs the engine only observed about 2.3 k of the Tarantula's ~7.6 k state changes per second.
-- Late wake-ups (more than one interval late) are counted and the schedule resynchronized instead of bursting.
-- **No allocation, lock or free on the input thread** after start. Profiles are published by `std::atomic` pointer exchange. The input thread pushes retired profiles into an SPSC queue, and the control thread frees them.
-- Telemetry (raw, output, processing/submit/total ns, context, flags) goes into a 64k-entry SPSC queue. If it is full, the sample is dropped and counted; the input thread never waits.
-- Logging from the input thread uses a separate lock-free ring (`Logger::logRt`). The writer thread turns records into JSON Lines.
-- **Disconnect**: neutral state submitted at once, processor reset, reconnect attempted every 250 ms.
-- **Pass-through**: bypass flag (UI, Ctrl+Alt+P, or holding Back+Start) sends the raw state unchanged.
-- **Safe shutdown**: `stop()` always submits neutral, closes the sink (removing any virtual pad) and restores thread priority.
-- **Idle ticks**: XInput reports nothing while the state is unchanged. If smoothing or a crossfade has not settled, the engine re-runs the last sample with a fresh timestamp so the output still converges.
+- Uma thread dedicada, com prioridade MMCSS "Games" (alternativa: `THREAD_PRIORITY_HIGHEST`).
+- Ritmo: `Spin`, `Hybrid` (timer de alta resolução e depois espera ativa nos últimos ≤150 µs) ou `Timer`. O padrão é Híbrido a 125 µs. A 250 µs o motor só via cerca de 2,3 mil das ~7,6 mil mudanças de estado por segundo do Tarantula.
+- Atrasos do agendador (mais de um intervalo de atraso) são contados, e o ritmo é ressincronizado em vez de compensar com rajadas.
+- **Nenhuma alocação, lock ou liberação de memória na thread de entrada** depois do início. Os perfis são publicados por troca de ponteiro com `std::atomic`. A thread de entrada coloca os perfis aposentados numa fila SPSC, e a thread de controle libera a memória deles.
+- A telemetria (original, saída, ns de processamento/envio/total, contexto, flags) vai para uma fila SPSC de 64 mil entradas. Se ela estiver cheia, a amostra é descartada e contada; a thread de entrada nunca espera.
+- Os logs da thread de entrada usam um buffer circular separado e sem lock (`Logger::logRt`). A thread de escrita transforma os registros em JSON Lines.
+- **Desconexão**: estado neutro enviado na hora, processamento reiniciado, nova tentativa de conexão a cada 250 ms.
+- **Pass-through**: a flag de bypass (interface, Ctrl+Alt+P ou segurar Back+Start) envia o estado original sem alteração.
+- **Encerramento seguro**: `stop()` sempre envia o estado neutro, fecha a saída (removendo qualquer controle virtual) e restaura a prioridade da thread.
+- **Ciclos ociosos**: o XInput não informa nada enquanto o estado não muda. Se a suavização ou a transição ainda não estabilizou, o motor reprocessa a última amostra com um carimbo de tempo novo para a saída continuar convergindo.
 
-## Measurement model
+## Como cada coisa é medida
 
-| Quantity | How it is measured | What it is not |
+| Grandeza | Como é medida | O que ela não é |
 | --- | --- | --- |
-| XInput sample interval | QPC at `XInputGetState` return when the packet number changes | not the USB polling interval: unchanged reports are invisible to XInput |
-| Missed packets | gaps in XInput packet numbers between consecutive observations | not USB-level loss |
-| HID report rate | QPC at `WM_INPUT` receipt per device (Raw Input, input sink) | includes driver and message-queue scheduling. Reports delivered in one message share a timestamp, and those messages are counted |
-| Processing time | QPC around `Processor::process()` | quantized to 100 ns. The batch mean gives the precise average |
-| Software path | acquisition timestamp → sink submit returned | excludes USB, driver, game and display |
+| Intervalo entre amostras XInput | QPC no retorno do `XInputGetState` quando o contador de pacotes muda | não é o intervalo de polling USB: relatórios sem mudança são invisíveis para o XInput |
+| Pacotes perdidos | lacunas no contador de pacotes do XInput entre duas leituras | não é perda no nível do USB |
+| Taxa de relatórios HID | QPC ao receber o `WM_INPUT` de cada dispositivo (Raw Input, input sink) | inclui o agendamento do driver e da fila de mensagens. Relatórios entregues na mesma mensagem dividem o carimbo de tempo, e essas mensagens são contadas |
+| Tempo de processamento | QPC em volta de `Processor::process()` | arredondado para 100 ns. A média do lote dá o valor preciso |
+| Caminho do software | carimbo da leitura → retorno do envio | não inclui USB, driver, jogo nem monitor |
+| Atraso adicionado pelo app (Painel) | metade do intervalo entre leituras (em média o estado novo espera isso) + leitura → envio; o pior caso usa o intervalo inteiro | não inclui o trecho controle virtual → jogo |
 
-The analyzers never assume a nominal rate. `TimingAnalyzer` estimates the median from data and flags gaps relative to it.
+Os analisadores nunca assumem uma taxa nominal. O `TimingAnalyzer` estima a mediana a partir dos dados e marca as lacunas em relação a ela.
 
-## Technical choices
+## Escolhas técnicas
 
-- **C++20 + CMake + Ninja/MSVC**: as requested. The core also builds with `STICKYAIM_CORE_ONLY=ON` without any Windows API.
-- **Qt 6 Widgets** (6.8 LTS) instead of QML: lower overhead for many live custom-painted views, simpler deployment. Plots are custom `QPainter` widgets, so Qt Charts is not needed.
-- **XInput** as the primary source: the Tarantula 8K enumerates as an Xbox 360-compatible device (xusb22), and XInput exposes packet numbers for loss detection.
-- **Raw Input** for report-rate measurement and for non-XInput controllers. A message-only window with `RIDEV_INPUTSINK` sees reports regardless of focus. HID parsing uses `HidP_*` with the preparsed descriptor, so axes are read generically and mapped by device files.
-- **ViGEmBus** for optional output: it is still the only widely deployed user-mode-accessible virtual gamepad bus. It is retired upstream, which is why output is optional and off by default ([DELIVERY.md](DELIVERY.md)).
-- **nlohmann/json** for profiles, settings, device files and reports: header-only, maintained, MIT.
-- **GoogleTest** for tests.
+- **C++20 + CMake + Ninja/MSVC**: como pedido. O núcleo também compila com `STICKYAIM_CORE_ONLY=ON`, sem nenhuma API do Windows.
+- **Qt 6 Widgets** (6.8 LTS) em vez de QML: menos sobrecarga para muitas visualizações ao vivo desenhadas à mão e distribuição mais simples. Os gráficos são widgets `QPainter` próprios, então o Qt Charts não é necessário.
+- **XInput** como fonte principal: o Tarantula 8K aparece como dispositivo compatível com Xbox 360 (xusb22), e o XInput expõe o contador de pacotes para detectar perdas.
+- **Raw Input** para medir a taxa de relatórios e para controles que não são XInput. Uma janela só de mensagens com `RIDEV_INPUTSINK` recebe os relatórios mesmo sem foco. A leitura HID usa `HidP_*` com o descritor pré-analisado, então os eixos são lidos de forma genérica e mapeados pelos arquivos de dispositivo.
+- **ViGEmBus** para a saída opcional: ainda é o único barramento de controle virtual amplamente usado e acessível pelo modo de usuário. Ele foi descontinuado pelo autor, por isso a saída é opcional e vem desligada ([DELIVERY.md](DELIVERY.md)).
+- **nlohmann/json** para perfis, configurações, arquivos de dispositivo e relatórios: só cabeçalhos, mantido, licença MIT.
+- **GoogleTest** para os testes.
+- **Interface**: paleta escura no estilo das cores de sistema do macOS, fonte Segoe UI Variable, ícones SVG próprios e textos traduzidos por `T()` (`src/app/i18n.cpp`, `src/app/i18n_pt_br.cpp`).
