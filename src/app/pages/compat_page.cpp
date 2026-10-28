@@ -18,6 +18,7 @@
 #include "stickyaim/platform/system_probe.hpp"
 #include "stickyaim/platform/vigem_sink.hpp"
 #include "stickyaim/platform/xinput_source.hpp"
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
@@ -56,6 +57,7 @@ QTableWidget* makeTable(const QStringList& headers) {
     t->verticalHeader()->setVisible(false);
     t->setEditTriggers(QAbstractItemView::NoEditTriggers);
     t->setMinimumHeight(110);
+    t->setShowGrid(false);
     return t;
 }
 
@@ -72,36 +74,29 @@ QString launcherName(const QString& id) {
 }  // namespace
 
 CompatPage::CompatPage(AppController* app, QWidget* parent) : QWidget(parent), app_(app) {
-    auto* outer = new QVBoxLayout(this);
+    auto* root = new QVBoxLayout(this);
+    root->setContentsMargins(0, 0, 0, 0);
+    root->setSpacing(22);
     auto* top = new QHBoxLayout;
-    top->addWidget(ui::heading(T("Device Compatibility")));
-    top->addStretch();
+    auto* titles = new QVBoxLayout;
+    titles->setSpacing(2);
+    titles->addWidget(ui::heading(T("Device Compatibility")));
+    summary_ = ui::subheading({});
+    summary_->setTextFormat(Qt::RichText);
+    titles->addWidget(summary_);
+    top->addLayout(titles, 1);
     auto* rescanBtn = new QPushButton(T("Re-scan"));
     auto* exportBtn = new QPushButton(T("Export report…"));
-    top->addWidget(rescanBtn);
-    top->addWidget(exportBtn);
-    outer->addLayout(top);
-
-    auto* scroll = new QScrollArea;
-    scroll->setWidgetResizable(true);
-    auto* content = new QWidget;
-    auto* root = new QVBoxLayout(content);
-    scroll->setWidget(content);
-    outer->addWidget(scroll, 1);
-
-    summary_ = new QLabel;
-    summary_->setWordWrap(true);
-    summary_->setTextFormat(Qt::RichText);
-    root->addWidget(summary_);
+    top->addWidget(rescanBtn, 0, Qt::AlignTop);
+    top->addWidget(exportBtn, 0, Qt::AlignTop);
+    root->addLayout(top);
 
     auto box = [&](const QString& title, QWidget* w, const QString& noteText = {}) {
-        auto* g = new QGroupBox(title);
-        auto* l = new QVBoxLayout(g);
-        l->addWidget(w);
-        if (!noteText.isEmpty()) l->addWidget(ui::note(noteText));
+        auto* g = new ui::Group(title);
+        g->addContent(w, 8);
+        g->setFooter(noteText);
         root->addWidget(g);
-    };
-    xinput_ = makeTable({T("Slot"), T("Connected"), T("Subtype"), T("Wireless"), T("Note")});
+    };    xinput_ = makeTable({T("Slot"), T("Connected"), T("Subtype"), T("Wireless"), T("Note")});
     box(T("XInput slots"), xinput_,
         T("XInput does not expose which physical device occupies a slot. When the virtual pad is active it takes its own slot."));
     hid_ = makeTable({T("VID:PID"), T("Interface"), T("Usage"), T("Product"), T("Known device / mode"), T("Verification")});
@@ -120,6 +115,7 @@ CompatPage::CompatPage(AppController* app, QWidget* parent) : QWidget(parent), a
     checklist_->horizontalHeader()->setStretchLastSection(true);
     checklist_->verticalHeader()->setVisible(false);
     checklist_->setMinimumHeight(360);
+    checklist_->setShowGrid(false);
     box(T("Manual compatibility checklist (your results)"), checklist_,
         T("These are filled in by you while testing. No result is pre-filled or assumed. Results are saved to your settings."));
 

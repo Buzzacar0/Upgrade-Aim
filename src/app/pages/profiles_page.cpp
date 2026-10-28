@@ -14,85 +14,110 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
-#include <QScrollArea>
+#include <QStackedWidget>
 #include <QTabWidget>
 #include <QVBoxLayout>
 
 #include "app_controller.hpp"
 #include "pages/pages.hpp"
 #include "widgets/context_editor.hpp"
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
 ProfilesPage::ProfilesPage(AppController* app, QWidget* parent) : QWidget(parent), app_(app) {
-    auto* root = new QHBoxLayout(this);
+    auto* page = new QVBoxLayout(this);
+    page->setContentsMargins(0, 0, 0, 0);
+    page->setSpacing(18);
+    auto* titles = new QVBoxLayout;
+    titles->setSpacing(2);
+    titles->addWidget(ui::heading(T("Aim Profiles")));
+    titles->addWidget(ui::subheading(T("Choose a profile and tune how each context responds. Changes apply immediately.")));
+    page->addLayout(titles);
+
+    auto* root = new QHBoxLayout;
+    root->setSpacing(24);
+    page->addLayout(root, 1);
 
     // Library column.
     auto* libCol = new QVBoxLayout;
-    libCol->addWidget(ui::heading(T("Aim Profiles")));
+    libCol->setSpacing(10);
+    auto* libHeader = new QLabel(T("Library"));
+    libHeader->setObjectName("groupHeader");
+    libCol->addWidget(libHeader);
     list_ = new QListWidget;
-    libCol->addWidget(list_, 1);
-    auto* libBtns = new QGridLayout;
-    auto* loadBtn = new QPushButton(T("Load"));
+    list_->setMinimumHeight(220);
+    libCol->addWidget(list_);
+    auto* libBtns = new QHBoxLayout;
+    libBtns->setSpacing(8);
+    auto* loadBtn = new QPushButton(T("Use"));
+    loadBtn->setProperty("primary", true);
     auto* saveBtn = new QPushButton(T("Save"));
     auto* saveAsBtn = new QPushButton(T("Save as…"));
-    auto* newBtn = new QPushButton(T("New from current"));
-    libBtns->addWidget(loadBtn, 0, 0);
-    libBtns->addWidget(saveBtn, 0, 1);
-    libBtns->addWidget(saveAsBtn, 1, 0);
-    libBtns->addWidget(newBtn, 1, 1);
+    libBtns->addWidget(loadBtn);
+    libBtns->addWidget(saveBtn);
+    libBtns->addWidget(saveAsBtn);
     libCol->addLayout(libBtns);
     fileLabel_ = ui::note("");
     libCol->addWidget(fileLabel_);
     libCol->addWidget(ui::note(T("Shipped example profiles are read-only starting points; Save writes to your profile folder.")));
-    root->addLayout(libCol, 1);
+    libCol->addStretch();
+    auto* libHost = new QWidget;
+    libHost->setObjectName("column");
+    libHost->setFixedWidth(300);
+    libHost->setLayout(libCol);
+    root->addWidget(libHost, 0, Qt::AlignTop);
 
     // Editor column.
     auto* edCol = new QVBoxLayout;
-    auto* general = new QGroupBox(T("Profile"));
-    auto* gForm = new QFormLayout(general);
+    edCol->setSpacing(22);
+    auto* general = new ui::Group(T("Profile"));
     description_ = new QPlainTextEdit;
-    description_->setMaximumHeight(60);
-    gForm->addRow(T("Description"), description_);
-    adsFromLt_ = new QCheckBox(T("Use ADS response while the left trigger is held"));
+    description_->setFixedHeight(74);
+    description_->setPlaceholderText(T("Description"));
+    general->addContent(description_, 12);
+    adsFromLt_ = new QCheckBox;
+    general->addRow(T("ADS on the left trigger"), adsFromLt_, T("Use the ADS response while the left trigger is held."));
     adsEnter_ = ui::spin(0.01, 1.0, 0.01, 2, 0.15);
+    general->addRow(T("ADS enter at LT ≥"), adsEnter_);
     adsExit_ = ui::spin(0.0, 0.99, 0.01, 2, 0.08);
+    general->addRow(T("ADS exit at LT ≤"), adsExit_);
     transition_ = ui::spin(0.0, 500.0, 1.0, 0, 0.0);
-    transition_->setToolTip(T("Crossfade between hip and ADS responses. 0 = switch on the same sample."));
-    gForm->addRow(adsFromLt_);
-    gForm->addRow(T("ADS enter at LT ≥"), adsEnter_);
-    gForm->addRow(T("ADS exit at LT ≤"), adsExit_);
-    gForm->addRow(T("Hip ↔ ADS crossfade (ms)"), transition_);
-    moveInner_ = ui::spin(0.0, 0.85, 0.005, 3, 0.05);
-    moveOuter_ = ui::spin(0.15, 1.0, 0.005, 3, 0.98);
-    gForm->addRow(T("Move stick inner deadzone"), moveInner_);
-    gForm->addRow(T("Move stick outer threshold"), moveOuter_);
-    ltInner_ = ui::spin(0.0, 0.9, 0.01, 2, 0.0);
-    rtInner_ = ui::spin(0.0, 0.9, 0.01, 2, 0.0);
-    gForm->addRow(T("Left trigger deadzone"), ltInner_);
-    gForm->addRow(T("Right trigger deadzone"), rtInner_);
+    general->addRow(T("Hip ↔ ADS crossfade (ms)"), transition_, T("0 = switch on the same sample."));
     edCol->addWidget(general);
 
-    auto* tabs = new QTabWidget;
+    auto* move = new ui::Group(T("Movement stick and triggers"));
+    moveInner_ = ui::spin(0.0, 0.85, 0.005, 3, 0.05);
+    move->addRow(T("Move stick inner deadzone"), moveInner_);
+    moveOuter_ = ui::spin(0.15, 1.0, 0.005, 3, 0.98);
+    move->addRow(T("Move stick outer threshold"), moveOuter_);
+    ltInner_ = ui::spin(0.0, 0.9, 0.01, 2, 0.0);
+    move->addRow(T("Left trigger deadzone"), ltInner_);
+    rtInner_ = ui::spin(0.0, 0.9, 0.01, 2, 0.0);
+    move->addRow(T("Right trigger deadzone"), rtInner_);
+    edCol->addWidget(move);
+
+    auto* ctxRow = new QHBoxLayout;
+    auto* ctxHeader = new QLabel(T("Aim stick"));
+    ctxHeader->setObjectName("groupHeader");
+    auto* ctxSwitch = new ui::Segmented({T("Hip-fire"), T("ADS")});
+    ctxRow->addWidget(ctxHeader);
+    ctxRow->addStretch();
+    ctxRow->addWidget(ctxSwitch);
+    edCol->addLayout(ctxRow);
+    auto* stack = new QStackedWidget;
     hip_ = new ContextEditor;
     ads_ = new ContextEditor;
-    auto wrap = [](QWidget* w) {
-        auto* s = new QScrollArea;
-        s->setWidgetResizable(true);
-        s->setWidget(w);
-        return s;
-    };
-    tabs->addTab(wrap(hip_), T("Hip-fire"));
-    tabs->addTab(wrap(ads_), T("ADS"));
-    edCol->addWidget(tabs, 1);
-    edCol->addWidget(ui::note(T("Fine adjustments and fast movements are configured per context with the fine (near-center) and "
-                              "fast (near-rim) bands of each curve, and with the smoothing flick bypass.")));
+    stack->addWidget(hip_);
+    stack->addWidget(ads_);
+    connect(ctxSwitch, &ui::Segmented::currentChanged, stack, &QStackedWidget::setCurrentIndex);
+    edCol->addWidget(stack);
     errors_ = new QLabel;
     errors_->setStyleSheet("color: #FF453A");
     errors_->setWordWrap(true);
     edCol->addWidget(errors_);
-    root->addLayout(edCol, 3);
-
+    edCol->addStretch();
+    root->addLayout(edCol, 1);
     connect(hip_, &ContextEditor::changed, this, &ProfilesPage::pushToController);
     connect(ads_, &ContextEditor::changed, this, &ProfilesPage::pushToController);
     for (auto* s : {adsEnter_, adsExit_, transition_, moveInner_, moveOuter_, ltInner_, rtInner_})
@@ -124,7 +149,6 @@ ProfilesPage::ProfilesPage(AppController* app, QWidget* parent) : QWidget(parent
         refreshList();
     };
     connect(saveAsBtn, &QPushButton::clicked, this, saveAs);
-    connect(newBtn, &QPushButton::clicked, this, saveAs);
     connect(saveBtn, &QPushButton::clicked, this, [this, saveAs] {
         const QString path = app_->profilePath();
         // Never overwrite the shipped examples.

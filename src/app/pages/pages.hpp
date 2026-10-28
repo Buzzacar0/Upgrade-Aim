@@ -27,6 +27,10 @@ class QTabWidget;
 class QCheckBox;
 class QSpinBox;
 class QDoubleSpinBox;
+class QStackedWidget;
+namespace ui {
+class Segmented;
+}
 
 // 1. Dashboard — device, profile, engine/output state.
 class DashboardPage : public QWidget {
@@ -66,7 +70,8 @@ private:
     StickView *leftView_, *rightView_;
     CurveEditor* curve_;
     TimePlot* plot_;
-    QComboBox *editContext_, *editAxis_, *view_;
+    ui::Segmented *editContext_, *view_;
+    QComboBox* editAxis_;
     QLabel *calStatus_, *contextLabel_;
     QPushButton *restBtn_, *rangeBtn_, *applyCenter_, *applyDeadzone_, *applyRange_;
     ShapeEditor* shapeEdit_;
@@ -162,6 +167,6 @@ private:
     AppController* app_;
     QCheckBox *allowVirtual_, *panicEnabled_, *forwardRumble_;
     QSpinBox* panicHold_;
-    QComboBox* output_;
+    ui::Segmented* output_;
     QLabel* outputStatus_;
 };

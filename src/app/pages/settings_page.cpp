@@ -1,3 +1,4 @@
+#include <QApplication>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDesktopServices>
@@ -17,6 +18,7 @@
 #include "stickyaim/core/config_io.hpp"
 #include "stickyaim/platform/system_probe.hpp"
 #include "stickyaim/platform/vigem_sink.hpp"
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
@@ -40,59 +42,62 @@ const char* kRiskText =
 }  // namespace
 
 SettingsPage::SettingsPage(AppController* app, QWidget* parent) : QWidget(parent), app_(app) {
-    auto* root = new QVBoxLayout(this);
-    root->addWidget(ui::heading(T("Settings")));
+    QVBoxLayout* col = ui::centeredColumn(this);
+    auto* titles = new QVBoxLayout;
+    titles->setSpacing(2);
+    titles->addWidget(ui::heading(T("Settings")));
+    titles->addWidget(ui::subheading(T("Where the processed input goes, safety controls and app data.")));
+    col->addLayout(titles);
 
-    auto* outBox = new QGroupBox(T("Input delivery"));
-    auto* outL = new QVBoxLayout(outBox);
-    allowVirtual_ = new QCheckBox(T("Allow virtual controller output (ViGEm) — off by default"));
-    output_ = new QComboBox;
-    output_->addItems({T("Safe preview (no injection)"), T("Virtual Xbox 360 controller (ViGEm)")});
-    forwardRumble_ = new QCheckBox(T("Forward game rumble from the virtual pad to the physical controller"));
+    // ---- output
+    auto* out = new ui::Group(T("Output"));
+    allowVirtual_ = new QCheckBox;
+    out->addRow(T("Allow virtual controller"), allowVirtual_, T("Off by default. Creates a virtual Xbox 360 controller (ViGEm)."));
+    output_ = new ui::Segmented({T("Preview"), T("Virtual controller")});
+    out->addRow(T("Send input to"), output_);
+    forwardRumble_ = new QCheckBox;
     forwardRumble_->setChecked(true);
     forwardRumble_->setEnabled(false);
-    forwardRumble_->setToolTip(T("Always on in this version."));
-    outputStatus_ = new QLabel;
-    outputStatus_->setWordWrap(true);
-    outL->addWidget(allowVirtual_);
-    auto* row = new QHBoxLayout;
-    row->addWidget(new QLabel(T("Output")));
-    row->addWidget(output_, 1);
-    outL->addLayout(row);
-    outL->addWidget(forwardRumble_);
-    outL->addWidget(outputStatus_);
-    outL->addWidget(ui::note(T("Emergency controls: Ctrl+Alt+P toggles pass-through (raw input), Ctrl+Alt+X immediately removes the "
-                             "virtual controller and returns to safe preview. Holding the panic combo on the controller toggles "
-                             "pass-through.")));
-    root->addWidget(outBox);
+    out->addRow(T("Forward rumble to the controller"), forwardRumble_, T("Always on in this version."));
+    outputStatus_ = out->footerLabel();
+    col->addWidget(out);
 
-    auto* panicBox = new QGroupBox(T("Controller panic combo"));
-    auto* panicL = new QFormLayout(panicBox);
-    panicEnabled_ = new QCheckBox(T("Hold Back + Start to toggle pass-through"));
+    // ---- safety
+    auto* safety = new ui::Group(T("Safety"));
+    panicEnabled_ = new QCheckBox;
+    safety->addRow(T("Panic combo"), panicEnabled_, T("Hold Back + Start on the controller to switch Bypass on or off."));
     panicHold_ = new QSpinBox;
     panicHold_->setRange(300, 5000);
+    panicHold_->setSingleStep(100);
     panicHold_->setSuffix(" ms");
-    panicL->addRow(panicEnabled_);
-    panicL->addRow(T("Hold time"), panicHold_);
-    auto* applyPanic = new QPushButton(T("Apply"));
-    panicL->addRow(applyPanic);
-    root->addWidget(panicBox);
+    panicHold_->setKeyboardTracking(false);
+    safety->addRow(T("Hold time"), panicHold_);
+    safety->setFooter(T("Ctrl+Alt+P switches Bypass on or off. Ctrl+Alt+X removes the virtual controller at once and returns to preview."));
+    col->addWidget(safety);
 
-    auto* dataBox = new QGroupBox(T("Configuration"));
-    auto* dataL = new QHBoxLayout(dataBox);
-    auto* exportBtn = new QPushButton(T("Export profile + calibration…"));
+    // ---- data
+    auto* dataGroup = new ui::Group(T("Data"));
+    auto* exportBtn = new QPushButton(T("Export…"));
+    dataGroup->addRow(T("Export profile and calibration"), exportBtn);
     auto* importBtn = new QPushButton(T("Import…"));
-    auto* resetBtn = new QPushButton(T("Reset everything to defaults"));
+    dataGroup->addRow(T("Import configuration or profile"), importBtn);
+    auto* openBtn = new QPushButton(T("Open"));
+    dataGroup->addRow(T("Data folder"), openBtn, app_->userDataDir());
+    auto* resetBtn = new QPushButton(T("Reset…"));
     resetBtn->setObjectName("danger");
-    auto* openBtn = new QPushButton(T("Open data folder (logs, profiles)"));
-    dataL->addWidget(exportBtn);
-    dataL->addWidget(importBtn);
-    dataL->addWidget(openBtn);
-    dataL->addStretch();
-    dataL->addWidget(resetBtn);
-    root->addWidget(dataBox);
-    root->addWidget(ui::note(T("Data folder: ") + app_->userDataDir()));
-    root->addStretch();
+    dataGroup->addRow(T("Reset to defaults"), resetBtn, T("Settings, calibration and the active profile. Saved profile files are kept."));
+    col->addWidget(dataGroup);
+
+    // ---- about
+    auto* about = new ui::Group(T("About"));
+    auto* version = new QLabel(QApplication::applicationVersion());
+    version->setObjectName("rowSubtitle");
+    about->addRow("Upgrade Aim", version, T("Controller precision lab · GameSir Tarantula 8K"));
+    auto* lang = new QLabel(i18n::language() == i18n::Lang::En ? "English" : "Português (Brasil)");
+    lang->setObjectName("rowSubtitle");
+    about->addRow(T("Language"), lang, T("Change it on the start screen."));
+    col->addWidget(about);
+    col->addStretch();
 
     connect(allowVirtual_, &QCheckBox::toggled, this, [this](bool on) {
         if (on && !app_->allowVirtualOutput()) {
@@ -109,20 +114,24 @@ SettingsPage::SettingsPage(AppController* app, QWidget* parent) : QWidget(parent
         if (!on && app_->output() == AppController::OutputKind::ViGEm) app_->setOutput(AppController::OutputKind::Preview, nullptr);
         refresh();
     });
-    connect(output_, &QComboBox::activated, this, [this](int idx) {
+    connect(output_, &ui::Segmented::currentChanged, this, [this](int idx) {
         QString err;
         if (!app_->setOutput(idx == 1 ? AppController::OutputKind::ViGEm : AppController::OutputKind::Preview, &err))
             QMessageBox::warning(this, T("Output"), err);
         refresh();
     });
-    connect(applyPanic, &QPushButton::clicked, this, [this] {
+    // Changes apply immediately, without an Apply button.
+    auto applyPanic = [this] {
         auto c = app_->engineConfig();
+        if (c.panic.enabled == panicEnabled_->isChecked() && c.panic.holdMs == panicHold_->value()) return;
         c.panic.enabled = panicEnabled_->isChecked();
         c.panic.holdMs = panicHold_->value();
         app_->setEngineConfig(c);
-    });
+    };
+    connect(panicEnabled_, &QCheckBox::toggled, this, applyPanic);
+    connect(panicHold_, &QSpinBox::valueChanged, this, applyPanic);
     connect(exportBtn, &QPushButton::clicked, this, [this] {
-        const QString path = QFileDialog::getSaveFileName(this, T("Export configuration"), app_->userDataDir() + "/stickyaim_config.json", T("JSON (*.json)"));
+        const QString path = QFileDialog::getSaveFileName(this, T("Export configuration"), app_->userDataDir() + "/upgradeaim_config.json", T("JSON (*.json)"));
         if (path.isEmpty()) return;
         nlohmann::json j = {{"format", "stickyaim-config"},
                             {"version", 1},
@@ -177,17 +186,21 @@ void SettingsPage::refresh() {
     allowVirtual_->setChecked(app_->allowVirtualOutput());
     allowVirtual_->blockSignals(false);
     output_->setEnabled(app_->allowVirtualOutput());
-    output_->setCurrentIndex(app_->output() == AppController::OutputKind::ViGEm ? 1 : 0);
+    output_->setCurrent(app_->output() == AppController::OutputKind::ViGEm ? 1 : 0);
     const auto c = app_->engineConfig();
+    panicEnabled_->blockSignals(true);
+    panicHold_->blockSignals(true);
     panicEnabled_->setChecked(c.panic.enabled);
     panicHold_->setValue(c.panic.holdMs);
+    panicEnabled_->blockSignals(false);
+    panicHold_->blockSignals(false);
     const auto drv = sa::win::probeDrivers();
-    QString status = QString(T("ViGEm client compiled in: %1 · ViGEmBus driver: %2 · HidHide: %3"))
-                         .arg(sa::win::ViGEmX360Sink::isCompiledIn() ? T("yes") : T("no"))
+    QString status = QString(T("ViGEmBus: %1 · HidHide: %2 · ViGEm client in this build: %3"))
                          .arg(T((drv.vigemBus.state).c_str()))
-                         .arg(T((drv.hidHide.state).c_str()));
-    if (app_->output() == AppController::OutputKind::ViGEm && app_->engineRunning()) {
+                         .arg(T((drv.hidHide.state).c_str()))
+                         .arg(sa::win::ViGEmX360Sink::isCompiledIn() ? T("yes") : T("no"));
+    if (app_->output() == AppController::OutputKind::ViGEm && app_->engineRunning())
         status += QString(T("<br><b style='color:#FF9F0A'>Virtual controller active.</b>"));
-    }
     outputStatus_->setText(status);
+    outputStatus_->show();
 }

@@ -16,6 +16,7 @@ add_executable(UpgradeAim WIN32
     widgets/histogram_view.hpp widgets/histogram_view.cpp
     widgets/context_editor.hpp widgets/context_editor.cpp
     widgets/ui_helpers.hpp widgets/ui_helpers.cpp
+    widgets/grouped_list.hpp widgets/grouped_list.cpp
     pages/pages.hpp
     pages/dashboard_page.cpp
     pages/stick_lab_page.cpp

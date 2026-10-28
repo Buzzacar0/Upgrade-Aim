@@ -16,75 +16,83 @@
 #include "pages/pages.hpp"
 #include "stickyaim/platform/rawinput.hpp"
 #include "widgets/histogram_view.hpp"
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
 LatencyPage::LatencyPage(AppController* app, QWidget* parent) : QWidget(parent), app_(app) {
     auto* root = new QVBoxLayout(this);
+    root->setContentsMargins(0, 0, 0, 0);
+    root->setSpacing(18);
     auto* top = new QHBoxLayout;
-    top->addWidget(ui::heading(T("Latency Lab")));
-    top->addStretch();
-    auto* reset = new QPushButton(T("Reset statistics"));
-    top->addWidget(reset);
-    root->addLayout(top);
-    root->addWidget(ui::note(
-        T("All values are measured on this machine with host-side QPC timestamps. 'Sample interval' is the time between new states "
+    auto* titles = new QVBoxLayout;
+    titles->setSpacing(2);
+    titles->addWidget(ui::heading(T("Latency Lab")));
+    auto* sub = ui::subheading(T("Timing measured on this PC: how often new data arrives, and how long the app takes with it."));
+    sub->setToolTip(T("All values are measured on this machine with host-side QPC timestamps. 'Sample interval' is the time between new states "
         "seen by the engine (for XInput: state changes, which can be fewer than USB reports). 'Software path' covers acquisition → "
         "processing → delivery inside this process only; USB transfer, driver, game and display latency are NOT included. USB polling "
-        "rate is not the same as this application's effective processing rate.")));
+        "rate is not the same as this application's effective processing rate."));
+    titles->addWidget(sub);
+    top->addLayout(titles, 1);
+    auto* reset = new QPushButton(T("Reset statistics"));
+    top->addWidget(reset, 0, Qt::AlignTop);
+    root->addLayout(top);
 
     auto* grid = new QGridLayout;
+    grid->setSpacing(14);
     intervals_ = new HistogramView(T("Engine sample interval (new states)"), "µs");
     process_ = new HistogramView(T("Processing time per sample (Processor::process)"), "µs");
     total_ = new HistogramView(T("Software path: acquisition → submit complete"), "µs");
+    for (auto* h : {intervals_, process_, total_}) h->setMinimumHeight(190);
     grid->addWidget(intervals_, 0, 0);
     grid->addWidget(process_, 0, 1);
     grid->addWidget(total_, 1, 0);
 
-    auto* statsBox = new QGroupBox(T("Measured summary"));
-    auto* statsL = new QVBoxLayout(statsBox);
+    auto* stats = new ui::Group(T("Measured summary"));
     summary_ = new QLabel;
     summary_->setWordWrap(true);
     summary_->setTextFormat(Qt::RichText);
-    summary_->setMinimumHeight(140);
     engineStats_ = new QLabel;
     engineStats_->setWordWrap(true);
+    engineStats_->setObjectName("rowSubtitle");
+    auto* statsBody = new QWidget;
+    statsBody->setObjectName("groupRow");
+    auto* statsL = new QVBoxLayout(statsBody);
+    statsL->setContentsMargins(0, 0, 0, 0);
+    statsL->setSpacing(10);
     statsL->addWidget(summary_);
     statsL->addWidget(engineStats_);
-    statsL->addStretch();
-    grid->addWidget(statsBox, 1, 1);
-    root->addLayout(grid, 2);
+    stats->addContent(statsBody);
+    grid->addWidget(stats, 1, 1, Qt::AlignTop);
+    root->addLayout(grid);
 
-    auto* hidBox = new QGroupBox(T("Raw Input HID report timing per device (arrival at this process)"));
-    auto* hidL = new QVBoxLayout(hidBox);
+    auto* cfgGroup = new ui::Group(T("Engine polling"));
+    mode_ = new QComboBox;
+    mode_->addItems({T("Spin (lowest latency, one core busy)"), T("Hybrid (timer + short spin)"), T("Timer only (lowest CPU)")});
+    cfgGroup->addRow(T("Mode"), mode_);
+    interval_ = new QSpinBox;
+    interval_->setRange(50, 20000);
+    interval_->setSuffix(" µs");
+    cfgGroup->addRow(T("Interval"), interval_, T("125 µs matches the 8 kHz rate of this controller."));
+    mmcss_ = new QCheckBox;
+    cfgGroup->addRow(T("MMCSS 'Games' priority"), mmcss_);
+    auto* apply = new QPushButton(T("Apply"));
+    cfgGroup->addRow(T("Restart the engine with these settings"), apply);
+    root->addWidget(cfgGroup);
+
+    auto* hidGroup = new ui::Group(T("Raw Input HID report timing per device (arrival at this process)"));
     hid_ = new QTableWidget(0, 9);
     hid_->setHorizontalHeaderLabels({T("Device"), T("Interface"), T("Reports"), T("Rate (Hz)"), T("Mean µs"), T("SD µs"), "p99 µs", T("Max µs"), T("Multi-report msgs")});
     hid_->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     hid_->horizontalHeader()->setStretchLastSection(true);
     hid_->verticalHeader()->setVisible(false);
     hid_->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    hidL->addWidget(hid_);
-    hidL->addWidget(ui::note(T("Move the stick continuously while measuring. Some controllers only send reports when something changes.")));
-    root->addWidget(hidBox, 1);
-
-    auto* cfgBox = new QGroupBox(T("Engine polling"));
-    auto* cfgL = new QHBoxLayout(cfgBox);
-    mode_ = new QComboBox;
-    mode_->addItems({T("Spin (lowest latency, one core busy)"), T("Hybrid (timer + short spin)"), T("Timer only (lowest CPU)")});
-    interval_ = new QSpinBox;
-    interval_->setRange(50, 20000);
-    interval_->setSuffix(" µs");
-    mmcss_ = new QCheckBox(T("MMCSS 'Games' priority"));
-    auto* apply = new QPushButton(T("Apply (restarts engine)"));
-    cfgL->addWidget(new QLabel(T("Mode")));
-    cfgL->addWidget(mode_);
-    cfgL->addWidget(new QLabel(T("Interval")));
-    cfgL->addWidget(interval_);
-    cfgL->addWidget(mmcss_);
-    cfgL->addWidget(apply);
-    cfgL->addStretch();
-    root->addWidget(cfgBox);
-
+    hid_->setShowGrid(false);
+    hid_->setMinimumHeight(150);
+    hidGroup->addContent(hid_, 8);
+    hidGroup->setFooter(T("Move the stick continuously while measuring. Some controllers only send reports when something changes."));
+    root->addWidget(hidGroup);
     const auto cfg = app_->engineConfig();
     mode_->setCurrentIndex(static_cast<int>(cfg.mode));
     interval_->setValue(cfg.intervalUs);

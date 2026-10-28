@@ -15,6 +15,7 @@
 #include "widgets/curve_editor.hpp"
 #include "widgets/stick_view.hpp"
 #include "widgets/time_plot.hpp"
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
@@ -29,95 +30,96 @@ sa::ResponseShape& selectedShape(sa::AimContextConfig& c, int axis) {
 
 StickLabPage::StickLabPage(AppController* app, QWidget* parent) : QWidget(parent), app_(app) {
     auto* root = new QVBoxLayout(this);
+    root->setContentsMargins(0, 0, 0, 0);
+    root->setSpacing(18);
     auto* top = new QHBoxLayout;
-    top->addWidget(ui::heading(T("Stick Lab")));
-    top->addStretch();
+    auto* titles = new QVBoxLayout;
+    titles->setSpacing(2);
+    titles->addWidget(ui::heading(T("Stick Lab")));
+    titles->addWidget(ui::subheading(T("See each stick live, shape the response curve and calibrate your controller.")));
+    top->addLayout(titles, 1);
     contextLabel_ = new QLabel;
-    top->addWidget(contextLabel_);
+    top->addWidget(contextLabel_, 0, Qt::AlignTop);
     root->addLayout(top);
 
+    // Live views (left) and the response graph (right).
     auto* body = new QHBoxLayout;
-    root->addLayout(body, 1);
-
-    // Left column: live views.
+    body->setSpacing(18);
     auto* leftCol = new QVBoxLayout;
+    leftCol->setSpacing(14);
     auto* views = new QHBoxLayout;
+    views->setSpacing(14);
     // One view per stick, in controller order; each overlays raw and processed.
     leftView_ = new StickView(T("Movement · left stick"));
     rightView_ = new StickView(T("Aim · right stick"));
     views->addWidget(leftView_);
     views->addWidget(rightView_);
-    leftCol->addLayout(views, 2);
+    leftCol->addLayout(views, 3);
     plot_ = new TimePlot(T("Right stick X / Y over time"), -1, 1);
-    leftCol->addWidget(plot_, 1);
+    plot_->setMinimumHeight(200);
+    leftCol->addWidget(plot_, 2);
+    body->addLayout(leftCol, 1);
 
-    auto* calBox = new QGroupBox(T("Calibration (measured on your controller)"));
-    auto* calL = new QVBoxLayout(calBox);
-    auto* calBtns = new QHBoxLayout;
-    restBtn_ = new QPushButton(T("Rest test · 3 s"));
-    restBtn_->setToolTip(T("Rest test (3 s, hands off)"));
-    rangeBtn_ = new QPushButton(T("Range sweep · 6 s"));
-    rangeBtn_->setToolTip(T("Range sweep (6 s, rotate stick at the rim)"));
-    calBtns->addWidget(restBtn_);
-    calBtns->addWidget(rangeBtn_);
-    calL->addLayout(calBtns);
-    calStatus_ = new QLabel(T("Run the rest test first. Results are measurements of this controller only."));
-    calStatus_->setWordWrap(true);
-    calStatus_->setTextFormat(Qt::RichText);
-    calL->addWidget(calStatus_);
-    auto* applyBtns = new QHBoxLayout;
-    applyCenter_ = new QPushButton(T("Apply center"));
-    applyCenter_->setToolTip(T("Apply measured center"));
-    applyDeadzone_ = new QPushButton(T("Apply deadzone"));
-    applyDeadzone_->setToolTip(T("Use recommended inner deadzone"));
-    applyRange_ = new QPushButton(T("Apply range"));
-    applyRange_->setToolTip(T("Apply range + outer threshold"));
-    for (auto* b : {applyCenter_, applyDeadzone_, applyRange_}) {
-        b->setEnabled(false);
-        applyBtns->addWidget(b);
-    }
-    calL->addLayout(applyBtns);
-    leftCol->addWidget(calBox);
-    body->addLayout(leftCol, 3);
-
-    // Right column: curve editor and shape controls.
     auto* rightCol = new QVBoxLayout;
+    rightCol->setSpacing(12);
     auto* sel = new QHBoxLayout;
-    view_ = new QComboBox;
-    view_->addItems({T("Full stick response"), T("Curve shape (edit)")});
-    editContext_ = new QComboBox;
-    editContext_->addItems({T("Hip-fire"), T("ADS")});
+    sel->setSpacing(10);
+    view_ = new ui::Segmented({T("Full response"), T("Curve shape")});
+    editContext_ = new ui::Segmented({T("Hip-fire"), T("ADS")});
     editAxis_ = new QComboBox;
     editAxis_->addItems({T("Magnitude"), T("X axis"), T("Y axis")});
-    sel->addWidget(new QLabel(T("View")));
+    editAxis_->setMinimumWidth(120);
     sel->addWidget(view_);
-    sel->addWidget(new QLabel(T("Edit")));
+    sel->addStretch();
     sel->addWidget(editContext_);
     sel->addWidget(editAxis_);
     rightCol->addLayout(sel);
     curve_ = new CurveEditor;
-    rightCol->addWidget(curve_, 2);
+    curve_->setMinimumHeight(420);
+    rightCol->addWidget(curve_, 1);
+    body->addLayout(rightCol, 1);
+    root->addLayout(body, 1);
 
-    auto* quick = new QGroupBox(T("Selected shape"));
-    auto* quickL = new QVBoxLayout(quick);
-    auto* dzForm = new QFormLayout;
+    // Calibration (left) and the selected shape (right), as grouped lists.
+    auto* lists = new QHBoxLayout;
+    lists->setSpacing(18);
+    lists->setAlignment(Qt::AlignTop);
+    auto* cal = new ui::Group(T("Calibration"));
+    restBtn_ = new QPushButton(T("Start"));
+    cal->addRow(T("Rest test"), restBtn_, T("3 s without touching the controller. Measures center and noise."));
+    rangeBtn_ = new QPushButton(T("Start"));
+    cal->addRow(T("Range sweep"), rangeBtn_, T("6 s rotating the stick against the rim."));
+    calStatus_ = new QLabel(T("Run the rest test first. Results are measurements of this controller only."));
+    calStatus_->setWordWrap(true);
+    calStatus_->setTextFormat(Qt::RichText);
+    calStatus_->setObjectName("rowSubtitle");
+    cal->addContent(calStatus_);
+    applyCenter_ = new QPushButton(T("Apply"));
+    cal->addRow(T("Measured center"), applyCenter_);
+    applyDeadzone_ = new QPushButton(T("Apply"));
+    cal->addRow(T("Recommended deadzone"), applyDeadzone_, T("Applied to hip-fire and ADS."));
+    applyRange_ = new QPushButton(T("Apply"));
+    cal->addRow(T("Range and outer threshold"), applyRange_);
+    for (auto* b : {applyCenter_, applyDeadzone_, applyRange_}) b->setEnabled(false);
+    lists->addWidget(cal, 1, Qt::AlignTop);
+
+    auto* shapeCol = new QVBoxLayout;
+    shapeCol->setSpacing(22);
+    auto* dz = new ui::Group(T("Selected shape"));
     inner_ = ui::spin(0.0, 0.85, 0.005, 3);
+    dz->addRow(T("Inner deadzone"), inner_);
     outer_ = ui::spin(0.15, 1.0, 0.005, 3);
-    dzForm->addRow(T("Inner deadzone"), inner_);
-    dzForm->addRow(T("Outer threshold"), outer_);
-    quickL->addLayout(dzForm);
-    shapeEdit_ = new ShapeEditor;
-    quickL->addWidget(shapeEdit_);
-    auto* scroll = new QScrollArea;
-    scroll->setWidgetResizable(true);
-    scroll->setWidget(quick);
-    rightCol->addWidget(scroll, 2);
-    body->addLayout(rightCol, 3);
-
+    dz->addRow(T("Outer threshold"), outer_);
+    shapeCol->addWidget(dz);
+    shapeEdit_ = new ShapeEditor(T("Curve"));
+    shapeCol->addWidget(shapeEdit_);
+    shapeCol->addStretch();
+    lists->addLayout(shapeCol, 1);
+    root->addLayout(lists);
     auto pushEdit = [this] {
         if (updating_) return;
         sa::Profile p = app_->profile();
-        auto& ctx = p.context(editContext_->currentIndex() == 1 ? sa::ContextId::Ads : sa::ContextId::Hip);
+        auto& ctx = p.context(editContext_->current() == 1 ? sa::ContextId::Ads : sa::ContextId::Hip);
         ctx.deadzone.inner = static_cast<float>(inner_->value());
         ctx.deadzone.outer = static_cast<float>(outer_->value());
         auto& shape = selectedShape(ctx, editAxis_->currentIndex());
@@ -131,14 +133,14 @@ StickLabPage::StickLabPage(AppController* app, QWidget* parent) : QWidget(parent
     connect(outer_, &QDoubleSpinBox::valueChanged, this, pushEdit);
     connect(curve_, &CurveEditor::pointsChanged, this, [this](const std::vector<sa::CurvePoint>& pts) {
         sa::Profile p = app_->profile();
-        auto& ctx = p.context(editContext_->currentIndex() == 1 ? sa::ContextId::Ads : sa::ContextId::Hip);
+        auto& ctx = p.context(editContext_->current() == 1 ? sa::ContextId::Ads : sa::ContextId::Hip);
         selectedShape(ctx, editAxis_->currentIndex()).curve.points = pts;
         app_->setProfile(p);
     });
-    connect(view_, &QComboBox::currentIndexChanged, this, [this](int i) {
+    connect(view_, &ui::Segmented::currentChanged, this, [this](int i) {
         curve_->setView(i == 0 ? CurveEditor::View::FullResponse : CurveEditor::View::CurveShape);
     });
-    connect(editContext_, &QComboBox::currentIndexChanged, this, &StickLabPage::onProfile);
+    connect(editContext_, &ui::Segmented::currentChanged, this, &StickLabPage::onProfile);
     connect(editAxis_, &QComboBox::currentIndexChanged, this, &StickLabPage::onProfile);
     connect(restBtn_, &QPushButton::clicked, this, [this] { runCalibration(true); });
     connect(rangeBtn_, &QPushButton::clicked, this, [this] { runCalibration(false); });
@@ -187,7 +189,7 @@ void StickLabPage::onProfile() {
     if (auto cp = sa::CompiledProfile::compile(app_->profile(), app_->calibration(), &errs))
         curve_->setContexts(cp->context(sa::ContextId::Hip), cp->context(sa::ContextId::Ads));
     sa::Profile p = app_->profile();
-    auto& ctx = p.context(editContext_->currentIndex() == 1 ? sa::ContextId::Ads : sa::ContextId::Hip);
+    auto& ctx = p.context(editContext_->current() == 1 ? sa::ContextId::Ads : sa::ContextId::Hip);
     const bool perAxis = ctx.curveMode == sa::CurveMode::PerAxis;
     editAxis_->setEnabled(perAxis);
     if (!perAxis && editAxis_->currentIndex() != 0) editAxis_->setCurrentIndex(0);

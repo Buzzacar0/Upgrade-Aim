@@ -7,13 +7,13 @@
 class QCheckBox;
 class QComboBox;
 class QDoubleSpinBox;
-class QGroupBox;
 
-// Editor for one response shape: curve type + parameters + fine/fast zones.
+// Editor for one response shape: curve type + parameters + fine/fast zones,
+// laid out as a grouped list. Rows that do not apply are hidden.
 class ShapeEditor : public QWidget {
     Q_OBJECT
 public:
-    explicit ShapeEditor(QWidget* parent = nullptr);
+    explicit ShapeEditor(const QString& header, QWidget* parent = nullptr);
     void setShape(const sa::ResponseShape& s);
     sa::ResponseShape shape() const;
 
@@ -28,6 +28,8 @@ private:
     QDoubleSpinBox *fineEnd_, *fineGain_, *fineBlend_;
     QCheckBox* fastOn_;
     QDoubleSpinBox *fastStart_, *fastGain_, *fastBlend_;
+    QWidget *expRow_, *kRow_;
+    QList<QWidget*> fineRows_, fastRows_;
     std::vector<sa::CurvePoint> points_;  // preserved; edited graphically
 };
 
@@ -51,5 +53,6 @@ private:
     QDoubleSpinBox *emaTau_, *minCutoff_, *beta_, *dCutoff_, *flick_;
     QCheckBox* circular_;
     ShapeEditor *radial_, *x_, *y_;
-    QGroupBox *radialBox_, *xBox_, *yBox_;
+    QWidget *innerRow_, *emaRow_, *flickRow_;
+    QList<QWidget*> euroRows_;
 };

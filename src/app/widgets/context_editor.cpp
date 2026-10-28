@@ -8,6 +8,7 @@
 #include <QSignalBlocker>
 #include <QVBoxLayout>
 
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
@@ -22,38 +23,34 @@ void block(std::initializer_list<W*> ws, bool on) {
 
 // ------------------------------------------------------------------ ShapeEditor
 
-ShapeEditor::ShapeEditor(QWidget* parent) : QWidget(parent) {
-    auto* form = new QFormLayout(this);
-    form->setContentsMargins(0, 0, 0, 0);
+ShapeEditor::ShapeEditor(const QString& header, QWidget* parent) : QWidget(parent) {
+    auto* v = new QVBoxLayout(this);
+    v->setContentsMargins(0, 0, 0, 0);
+    auto* g = new ui::Group(header);
+    v->addWidget(g);
     type_ = new QComboBox;
     type_->addItems({T("Linear"), T("Power"), T("Exponential"), T("Custom (edit in graph)")});
+    g->addRow(T("Curve"), type_);
     exponent_ = ui::spin(0.1, 10.0, 0.05, 2, 1.0);
-    exponent_->setToolTip(T("f(t) = t^exponent. >1 = slower start (more precision near center), <1 = faster start."));
+    expRow_ = g->addRow(T("Exponent"), exponent_, T("Above 1 = slower start, more precision near the center."));
     k_ = ui::spin(-12.0, 12.0, 0.1, 2, 0.0);
-    k_->setToolTip(T("f(t) = (e^(k t) - 1) / (e^k - 1). k>0 = slower start, k<0 = faster start, 0 = linear."));
-    form->addRow(T("Curve"), type_);
-    form->addRow(T("Exponent"), exponent_);
-    form->addRow(T("Exponential k"), k_);
+    kRow_ = g->addRow(T("Exponential k"), k_, T("Above 0 = slower start, below 0 = faster start."));
 
-    fineOn_ = new QCheckBox(T("Fine-adjustment band (near center)"));
+    fineOn_ = new QCheckBox;
+    g->addRow(T("Fine-adjustment band"), fineOn_, T("Near the center: more stick travel per step, for finer corrections."));
     fineEnd_ = ui::spin(0.02, 0.6, 0.01, 2, 0.25);
     fineGain_ = ui::spin(0.05, 4.0, 0.05, 2, 0.6);
-    fineGain_->setToolTip(T("Slope multiplier inside the band. <1 = more stick travel per output step (finer corrections)."));
     fineBlend_ = ui::spin(0.0, 0.3, 0.01, 2, 0.08);
-    form->addRow(fineOn_);
-    form->addRow(T("  band end"), fineEnd_);
-    form->addRow(T("  slope gain"), fineGain_);
-    form->addRow("  blend", fineBlend_);
+    fineRows_ << g->addRow(T("Band ends at"), fineEnd_) << g->addRow(T("Slope gain"), fineGain_)
+              << g->addRow(T("Blend"), fineBlend_);
 
-    fastOn_ = new QCheckBox(T("Fast-movement band (near rim)"));
+    fastOn_ = new QCheckBox;
+    g->addRow(T("Fast-movement band"), fastOn_, T("Near the rim: reach full output with less travel."));
     fastStart_ = ui::spin(0.4, 0.98, 0.01, 2, 0.8);
     fastGain_ = ui::spin(0.05, 20.0, 0.05, 2, 1.6);
-    fastGain_->setToolTip(T("Slope multiplier near the rim. >1 = reach full output with less travel."));
     fastBlend_ = ui::spin(0.0, 0.3, 0.01, 2, 0.08);
-    form->addRow(fastOn_);
-    form->addRow(T("  band start"), fastStart_);
-    form->addRow(T("  slope gain"), fastGain_);
-    form->addRow("  blend", fastBlend_);
+    fastRows_ << g->addRow(T("Band starts at"), fastStart_) << g->addRow(T("Slope gain"), fastGain_)
+              << g->addRow(T("Blend"), fastBlend_);
 
     auto emitChanged = [this] {
         syncEnabled();
@@ -68,13 +65,13 @@ ShapeEditor::ShapeEditor(QWidget* parent) : QWidget(parent) {
 }
 
 void ShapeEditor::syncEnabled() {
+    // Rows that do not apply are hidden rather than greyed out.
     const int t = type_->currentIndex();
-    exponent_->setEnabled(t == 1);
-    k_->setEnabled(t == 2);
-    for (auto* w : {fineEnd_, fineGain_, fineBlend_}) w->setEnabled(fineOn_->isChecked());
-    for (auto* w : {fastStart_, fastGain_, fastBlend_}) w->setEnabled(fastOn_->isChecked());
+    expRow_->setVisible(t == 1);
+    kRow_->setVisible(t == 2);
+    for (auto* r : fineRows_) r->setVisible(fineOn_->isChecked());
+    for (auto* r : fastRows_) r->setVisible(fastOn_->isChecked());
 }
-
 void ShapeEditor::setShape(const sa::ResponseShape& s) {
     block<QWidget>({type_, exponent_, k_, fineOn_, fineEnd_, fineGain_, fineBlend_, fastOn_, fastStart_, fastGain_, fastBlend_}, true);
     type_->setCurrentIndex(static_cast<int>(s.curve.type));
@@ -111,74 +108,59 @@ sa::ResponseShape ShapeEditor::shape() const {
 // ---------------------------------------------------------------- ContextEditor
 
 ContextEditor::ContextEditor(QWidget* parent) : QWidget(parent) {
-    auto* root = new QHBoxLayout(this);
+    auto* root = new QVBoxLayout(this);
     root->setContentsMargins(0, 0, 0, 0);
-    auto* left = new QVBoxLayout;
-    auto* right = new QVBoxLayout;
-    root->addLayout(left, 1);
-    root->addLayout(right, 1);
+    root->setSpacing(22);
 
-    auto* dzBox = new QGroupBox(T("Deadzone and thresholds"));
-    auto* dzForm = new QFormLayout(dzBox);
+    auto* dz = new ui::Group(T("Deadzone"));
     dzType_ = new QComboBox;
     dzType_->addItems({T("None (saturation only)"), T("Radial"), T("Axial")});
-    dzType_->setToolTip(T("Radial preserves direction; axial suppresses each axis independently (can snap diagonals to axes)."));
+    dz->addRow(T("Type"), dzType_);
     dzInner_ = ui::spin(0.0, 0.85, 0.005, 3, 0.05);
+    innerRow_ = dz->addRow(T("Inner deadzone"), dzInner_, T("Ignore stick noise below this deflection."));
     dzOuter_ = ui::spin(0.15, 1.0, 0.005, 3, 0.98);
-    dzForm->addRow(T("Type"), dzType_);
-    dzForm->addRow(T("Inner deadzone"), dzInner_);
-    dzForm->addRow(T("Outer threshold"), dzOuter_);
+    dz->addRow(T("Outer threshold"), dzOuter_, T("Deflection that already counts as full."));
     anti_ = ui::spin(0.0, 0.4, 0.005, 3, 0.0);
-    anti_->setToolTip(T("Minimum output once outside the deadzone. Only use to cancel a game deadzone that cannot be set to 0."));
-    dzForm->addRow(T("Anti-deadzone"), anti_);
-    left->addWidget(dzBox);
+    dz->addRow(T("Anti-deadzone"), anti_, T("Only to cancel a game deadzone that cannot be set to 0."));
+    dz->setFooter(T("Radial preserves direction; axial suppresses each axis independently (can snap diagonals to axes)."));
+    root->addWidget(dz);
 
-    auto* sensBox = new QGroupBox(T("Sensitivity and saturation"));
-    auto* sensForm = new QFormLayout(sensBox);
+    radial_ = new ShapeEditor(T("Response curve"));
+    x_ = new ShapeEditor(T("Horizontal (X) curve"));
+    y_ = new ShapeEditor(T("Vertical (Y) curve"));
+    root->addWidget(radial_);
+    root->addWidget(x_);
+    root->addWidget(y_);
+
+    auto* sens = new ui::Group(T("Sensitivity"));
     sensX_ = ui::spin(0.1, 4.0, 0.01, 2, 1.0);
+    sens->addRow(T("Horizontal"), sensX_);
     sensY_ = ui::spin(0.1, 4.0, 0.01, 2, 1.0);
-    sensX_->setToolTip(T("Output gain on the horizontal axis. Output never exceeds full deflection; >1 reaches it sooner."));
-    circular_ = new QCheckBox(T("Circular saturation (clamp |output| to 1)"));
+    sens->addRow(T("Vertical"), sensY_);
     curveMode_ = new QComboBox;
     curveMode_->addItems({T("Radial (one curve on magnitude)"), T("Per axis (separate X / Y curves)")});
-    sensForm->addRow(T("Horizontal"), sensX_);
-    sensForm->addRow(T("Vertical"), sensY_);
-    sensForm->addRow(circular_);
-    sensForm->addRow(T("Curve mode"), curveMode_);
-    left->addWidget(sensBox);
+    sens->addRow(T("Curve mode"), curveMode_);
+    circular_ = new QCheckBox;
+    sens->addRow(T("Circular saturation"), circular_, T("Keeps diagonals from exceeding full deflection."));
+    sens->setFooter(T("Output never exceeds full deflection; above 1 reaches it sooner."));
+    root->addWidget(sens);
 
-    auto* smBox = new QGroupBox(T("Smoothing (adds latency — measured in Testing)"));
-    auto* smForm = new QFormLayout(smBox);
+    auto* sm = new ui::Group(T("Smoothing"));
     smoothType_ = new QComboBox;
     smoothType_->addItems({T("Off (zero added latency)"), T("EMA low-pass"), T("One Euro (adaptive)")});
+    sm->addRow(T("Filter"), smoothType_);
     emaTau_ = ui::spin(0.1, 100.0, 0.5, 1, 4.0);
+    emaRow_ = sm->addRow(T("EMA time constant (ms)"), emaTau_);
     minCutoff_ = ui::spin(0.05, 60.0, 0.1, 2, 3.0);
     beta_ = ui::spin(0.0, 5.0, 0.01, 3, 0.05);
     dCutoff_ = ui::spin(0.1, 60.0, 0.5, 1, 10.0);
+    euroRows_ << sm->addRow(T("One Euro min cutoff (Hz)"), minCutoff_) << sm->addRow(T("One Euro beta"), beta_)
+              << sm->addRow(T("One Euro derivative cutoff (Hz)"), dCutoff_);
     flick_ = ui::spin(0.0, 200.0, 1.0, 1, 0.0);
-    flick_->setToolTip(T("Stick speed (full deflections per second) above which smoothing is bypassed. 0 = off."));
-    smForm->addRow(T("Filter"), smoothType_);
-    smForm->addRow(T("EMA time constant (ms)"), emaTau_);
-    smForm->addRow(T("One Euro min cutoff (Hz)"), minCutoff_);
-    smForm->addRow(T("One Euro beta"), beta_);
-    smForm->addRow(T("One Euro derivative cutoff (Hz)"), dCutoff_);
-    smForm->addRow(T("Flick bypass speed (/s)"), flick_);
-    left->addWidget(smBox);
-    left->addStretch();
-
-    radialBox_ = new QGroupBox(T("Response curve (magnitude)"));
-    radial_ = new ShapeEditor;
-    (new QVBoxLayout(radialBox_))->addWidget(radial_);
-    xBox_ = new QGroupBox(T("Horizontal (X) curve"));
-    x_ = new ShapeEditor;
-    (new QVBoxLayout(xBox_))->addWidget(x_);
-    yBox_ = new QGroupBox(T("Vertical (Y) curve"));
-    y_ = new ShapeEditor;
-    (new QVBoxLayout(yBox_))->addWidget(y_);
-    right->addWidget(radialBox_);
-    right->addWidget(xBox_);
-    right->addWidget(yBox_);
-    right->addStretch();
+    flickRow_ = sm->addRow(T("Flick bypass speed (/s)"), flick_, T("Above this stick speed smoothing is skipped. 0 = off."));
+    sm->setFooter(T("Smoothing is the only setting that adds delay. The Testing page measures how much."));
+    root->addWidget(sm);
+    root->addStretch();
 
     auto emitChanged = [this] {
         syncEnabled();
@@ -194,16 +176,15 @@ ContextEditor::ContextEditor(QWidget* parent) : QWidget(parent) {
 
 void ContextEditor::syncEnabled() {
     const bool perAxis = curveMode_->currentIndex() == 1;
-    radialBox_->setVisible(!perAxis);
-    xBox_->setVisible(perAxis);
-    yBox_->setVisible(perAxis);
+    radial_->setVisible(!perAxis);
+    x_->setVisible(perAxis);
+    y_->setVisible(perAxis);
     const int sm = smoothType_->currentIndex();
-    emaTau_->setEnabled(sm == 1);
-    for (auto* w : {minCutoff_, beta_, dCutoff_}) w->setEnabled(sm == 2);
-    flick_->setEnabled(sm != 0);
-    dzInner_->setEnabled(dzType_->currentIndex() != 0);
+    emaRow_->setVisible(sm == 1);
+    for (auto* r : euroRows_) r->setVisible(sm == 2);
+    flickRow_->setVisible(sm != 0);
+    innerRow_->setVisible(dzType_->currentIndex() != 0);
 }
-
 void ContextEditor::setConfig(const sa::AimContextConfig& c) {
     base_ = c;
     const std::initializer_list<QWidget*> ws = {dzType_, curveMode_, smoothType_, dzInner_, dzOuter_, sensX_, sensY_, anti_,

@@ -46,6 +46,24 @@ QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; lef
 QFrame#card { background: #1C1C1F; border: 1px solid #26262A; border-radius: 16px; }
 QFrame#card QLabel { background: transparent; }
 
+/* Grouped lists (macOS System Settings style) */
+QWidget#group, QWidget#groupRow, QWidget#column { background: transparent; }
+QFrame#groupCard { background: #1C1C1F; border: 1px solid #26262A; border-radius: 12px; }
+QFrame#rowSep { background: #2C2C30; border: none; }
+QLabel#groupHeader { font-size: 13px; font-weight: 600; color: #E5E5EA; padding-left: 4px; }
+QLabel#groupFooter { font-size: 12px; color: #8E8E93; padding: 0 4px; }
+QLabel#rowTitle { font-size: 13px; color: #F5F5F7; }
+QLabel#rowSubtitle { font-size: 12px; color: #8E8E93; }
+QFrame#segmented { background: rgba(255,255,255,0.07); border-radius: 8px; }
+QFrame#segmented QPushButton { background: transparent; color: #D1D1D6; border: none; border-radius: 6px; padding: 5px 16px; font-weight: 500; }
+QFrame#segmented QPushButton:hover:!checked { background: rgba(255,255,255,0.05); }
+QFrame#segmented QPushButton:checked { background: #636366; color: #FFFFFF; }
+QFrame#segmented QPushButton:disabled { color: #5A5A5F; }
+QFrame#segmented QPushButton:checked:disabled { background: #3A3A3F; color: #98989D; }
+QPushButton#link { background: transparent; color: #0A84FF; padding: 4px 2px; font-weight: 500; }
+QPushButton#link:hover { color: #409CFF; }
+QPushButton#link:disabled { color: #3A3A3F; }
+
 /* Typography */
 QLabel#heading { font-size: 26px; font-weight: 700; color: #F5F5F7; }
 QLabel#subheading { font-size: 13px; color: #98989D; }

@@ -16,6 +16,7 @@
 #include "app_controller.hpp"
 #include "pages/pages.hpp"
 #include "stickyaim/core/config_io.hpp"
+#include "widgets/grouped_list.hpp"
 #include "widgets/ui_helpers.hpp"
 #include "i18n.hpp"
 
@@ -43,38 +44,45 @@ QStringList columns() {
 
 TestingPage::TestingPage(AppController* app, QWidget* parent) : QWidget(parent), app_(app) {
     auto* root = new QVBoxLayout(this);
-    root->addWidget(ui::heading(T("Testing")));
-    root->addWidget(ui::note(
-        T("Objective signal measurements comparing the active profile against a baseline. Synthetic tests use deterministic, "
+    root->setContentsMargins(0, 0, 0, 0);
+    root->setSpacing(22);
+    auto* titles = new QVBoxLayout;
+    titles->setSpacing(2);
+    titles->addWidget(ui::heading(T("Testing")));
+    auto* sub = ui::subheading(T("Compare the active profile with a baseline using repeatable signal measurements."));
+    sub->setToolTip(T("Objective signal measurements comparing the active profile against a baseline. Synthetic tests use deterministic, "
         "seeded signals and are exactly repeatable. Live tests replay what you just did on the controller through both "
-        "profiles. None of these numbers measure in-game aim performance or the game's aim assist.")));
+        "profiles. None of these numbers measure in-game aim performance or the game's aim assist."));
+    titles->addWidget(sub);
+    root->addLayout(titles);
 
-    auto* synBox = new QGroupBox(T("Synthetic comparison (repeatable)"));
-    auto* synL = new QHBoxLayout(synBox);
+    auto* lists = new QHBoxLayout;
+    lists->setSpacing(18);
+    auto* syn = new ui::Group(T("Synthetic comparison (repeatable)"));
     baseline_ = new QComboBox;
+    syn->addRow(T("Baseline"), baseline_);
     context_ = new QComboBox;
     context_->addItems({T("Hip-fire"), T("ADS")});
-    auto* runSyn = new QPushButton(T("Run synthetic suite"));
+    syn->addRow(T("Context"), context_);
+    auto* runSyn = new QPushButton(T("Run"));
     runSyn->setObjectName("runSynthetic");
-    synL->addWidget(new QLabel(T("Baseline")));
-    synL->addWidget(baseline_, 1);
-    synL->addWidget(new QLabel(T("Context")));
-    synL->addWidget(context_);
-    synL->addWidget(runSyn);
-    root->addWidget(synBox);
+    runSyn->setProperty("primary", true);
+    syn->addRow(T("Run synthetic suite"), runSyn, T("Same signals every time, so results are exactly repeatable."));
+    lists->addWidget(syn, 1, Qt::AlignTop);
 
-    auto* liveBox = new QGroupBox(T("Live capture (uses the active controller)"));
-    auto* liveL = new QHBoxLayout(liveBox);
+    auto* live = new ui::Group(T("Live capture (uses the active controller)"));
     liveKind_ = new QComboBox;
     liveKind_->addItems({T("Rest — hands off (3 s)"), T("Slow tracking — smooth circles (6 s)"), T("Micro-adjustments — tiny corrections (6 s)"),
                          T("Flicks — fast full moves (6 s)")});
+    live->addRow(T("Movement"), liveKind_);
     liveBtn_ = new QPushButton(T("Start capture"));
-    liveStatus_ = new QLabel;
-    liveL->addWidget(liveKind_, 1);
-    liveL->addWidget(liveBtn_);
-    liveL->addWidget(liveStatus_, 1);
-    root->addWidget(liveBox);
+    live->addRow(T("Record and replay through both profiles"), liveBtn_);
+    liveStatus_ = live->footerLabel();
+    liveStatus_->show();  // status messages are set directly on the label
+    lists->addWidget(live, 1, Qt::AlignTop);
+    root->addLayout(lists);
 
+    auto* results = new ui::Group(T("Results"));
     const QStringList cols = columns();
     table_ = new QTableWidget(0, static_cast<int>(cols.size()));
     table_->setHorizontalHeaderLabels(cols);
@@ -82,20 +90,22 @@ TestingPage::TestingPage(AppController* app, QWidget* parent) : QWidget(parent),
     table_->horizontalHeader()->setStretchLastSection(true);
     table_->verticalHeader()->setVisible(false);
     table_->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    root->addWidget(table_, 2);
-    status_ = ui::note("");
-    root->addWidget(status_);
+    table_->setShowGrid(false);
+    table_->setMinimumHeight(320);
+    results->addContent(table_, 8);
+    status_ = results->footerLabel();
+    status_->show();
+    root->addWidget(results);
 
-    auto* subjBox = new QGroupBox(T("Subjective notes (kept separate from measurements in the exported report)"));
-    auto* subjL = new QVBoxLayout(subjBox);
+    auto* subj = new ui::Group(T("Subjective notes (kept separate from measurements in the exported report)"));
     notes_ = new QPlainTextEdit;
     notes_->setPlaceholderText(T("e.g. blind A/B in a private match: which felt better for tracking, and why. Record test conditions."));
-    notes_->setMaximumHeight(90);
-    subjL->addWidget(notes_);
-    auto* exportBtn = new QPushButton(T("Export report (JSON)…"));
-    subjL->addWidget(exportBtn, 0, Qt::AlignRight);
-    root->addWidget(subjBox);
-
+    notes_->setFixedHeight(90);
+    subj->addContent(notes_, 12);
+    auto* exportBtn = new QPushButton(T("Export…"));
+    subj->addRow(T("Export report"), exportBtn, "JSON");
+    root->addWidget(subj);
+    root->addStretch();
     auto fillBaselines = [this] {
         baseline_->clear();
         baseline_->addItem(T("Raw controller (no processing)"), QString());
