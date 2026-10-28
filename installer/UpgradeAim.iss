@@ -73,4 +73,7 @@ Name: "{autodesktop}\Upgrade Aim"; Filename: "{app}\bin\UpgradeAim.exe"; Tasks: 
 Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "{cm:RunRuntime}"; Flags: waituntilterminated
 Filename: "{app}\drivers\ViGEmBus_1.22.0_x64_x86_arm64.exe"; StatusMsg: "{cm:RunVigem}"; Tasks: vigem; Flags: waituntilterminated
 Filename: "{app}\drivers\HidHide_1.5.230_x64.exe"; StatusMsg: "{cm:RunHidHide}"; Tasks: hidhide; Flags: waituntilterminated
+; Windows caches icons by path: refresh it so an update over an older version
+; shows the new icon on the taskbar and in the Start menu.
+Filename: "{sys}\ie4uinit.exe"; Parameters: "-show"; Flags: runhidden waituntilterminated skipifdoesntexist
 Filename: "{app}\bin\UpgradeAim.exe"; Description: "{cm:RunApp}"; Flags: nowait postinstall skipifsilent

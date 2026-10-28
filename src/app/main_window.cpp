@@ -28,6 +28,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 #include "i18n.hpp"
 
 namespace {
@@ -108,15 +109,21 @@ MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent
         const char* icon;
         QWidget* widget;
     };
-    const Page pages[] = {
+    // Players see four simple pages. The labs, the profile editor, the detailed
+    // compatibility tables and the tests are for development: UpgradeAim.exe --dev.
+    std::vector<Page> pages = {
         {T("Dashboard"), ":/ui/nav-dashboard.svg", new DashboardPage(app_)},
-        {T("Stick Lab"), ":/ui/nav-stick.svg", new StickLabPage(app_)},
-        {T("Aim Profiles"), ":/ui/nav-profiles.svg", new ProfilesPage(app_)},
-        {T("Latency Lab"), ":/ui/nav-latency.svg", new LatencyPage(app_)},
-        {T("Device Compatibility"), ":/ui/nav-compat.svg", new CompatPage(app_)},
-        {T("Testing"), ":/ui/nav-testing.svg", new TestingPage(app_)},
-        {T("Settings"), ":/ui/nav-settings.svg", new SettingsPage(app_)},
+        {T("Aim Profiles"), ":/ui/nav-profiles.svg", new AimLevelsPage(app_)},
+        {T("Device Compatibility"), ":/ui/nav-compat.svg", new StatusPage(app_)},
     };
+    if (QCoreApplication::arguments().contains("--dev")) {
+        pages.push_back({T("Stick Lab"), ":/ui/nav-stick.svg", new StickLabPage(app_)});
+        pages.push_back({T("Profile editor"), ":/ui/nav-profiles.svg", new ProfilesPage(app_)});
+        pages.push_back({T("Latency Lab"), ":/ui/nav-latency.svg", new LatencyPage(app_)});
+        pages.push_back({T("Compatibility details"), ":/ui/nav-compat.svg", new CompatPage(app_)});
+        pages.push_back({T("Testing"), ":/ui/nav-testing.svg", new TestingPage(app_)});
+    }
+    pages.push_back({T("Settings"), ":/ui/nav-settings.svg", new SettingsPage(app_)});
     for (const auto& p : pages) {
         nav_->addItem(new QListWidgetItem(QIcon(p.icon), p.name));
         // Pages scroll when the window is shorter than their content, instead

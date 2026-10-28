@@ -22,6 +22,8 @@ add_executable(UpgradeAim WIN32
     pages/dashboard_page.cpp
     pages/stick_lab_page.cpp
     pages/profiles_page.cpp
+    pages/levels_page.cpp
+    pages/status_page.cpp
     pages/latency_page.cpp
     pages/compat_page.cpp
     pages/testing_page.cpp

@@ -82,7 +82,37 @@ private:
     bool updating_ = false;
 };
 
-// 3. Aim Profiles — hip / ADS contexts, fine & fast bands, profile files.
+// Aim Profiles for players — three big buttons: Low, Medium, High.
+class LevelCard;
+class AimLevelsPage : public QWidget {
+    Q_OBJECT
+public:
+    explicit AimLevelsPage(AppController* app, QWidget* parent = nullptr);
+
+private:
+    void refresh();
+    AppController* app_;
+    std::vector<LevelCard*> cards_;
+    QLabel* status_;
+};
+
+// Device Compatibility for players — one card per thing that must work, with a
+// green / yellow / red mark instead of tables.
+class StatusPage : public QWidget {
+    Q_OBJECT
+public:
+    explicit StatusPage(AppController* app, QWidget* parent = nullptr);
+
+protected:
+    void showEvent(QShowEvent* e) override;
+
+private:
+    void refresh();
+    AppController* app_;
+    QWidget* grid_;
+};
+
+// 3. Profile editor (developer mode) — hip / ADS contexts, fine & fast bands, profile files.
 class ProfilesPage : public QWidget {
     Q_OBJECT
 public:

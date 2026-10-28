@@ -71,6 +71,12 @@ QString init(bool* created) {
     *created = false;
     std::vector<std::uint8_t> priv;
     if (loadPrivateKey(priv)) return {};
+    // The app already trusts a key: a new pair would silently make every
+    // existing code invalid. The private.key must be restored instead.
+    if (lic::hasEmbeddedPublicKey())
+        return "A chave privada não foi encontrada em " + keyDir() +
+               ".\n\nO app já usa uma chave: coloque de volta o backup do private.key nessa pasta. "
+               "Para começar uma chave nova de propósito, apague src/platform/license_public_key.inc e abra o gerador de novo.";
     std::vector<std::uint8_t> pub;
     std::string err;
     if (!lic::generateKeyPair(priv, pub, &err)) return QString::fromStdString(err);

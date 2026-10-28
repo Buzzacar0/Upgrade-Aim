@@ -1,0 +1,195 @@
+{
+    "schema_version": 1,
+    "name": "Upgrade Baixo",
+    "description": "Quase igual ao controle sem o app. Só a deadzone medida no seu Tarantula 8K (0,02 no analógico direito) e uma curva leve (hip 1,1; ADS 1,15), sem faixa de ajuste fino e com a sensibilidade cheia. Sem suavização: zero de atraso.",
+    "target_device": "GameSir Tarantula 8K",
+    "hip": {
+        "deadzone": {
+            "type": "radial",
+            "inner": 0.02,
+            "outer": 0.97
+        },
+        "curve_mode": "radial",
+        "radial": {
+            "curve": {
+                "type": "power",
+                "exponent": 1.1,
+                "k": 0.0,
+                "points": []
+            },
+            "fine": {
+                "enabled": false,
+                "start": 0,
+                "end": 0.2,
+                "gain": 0.75,
+                "blend": 0.06
+            },
+            "fast": {
+                "enabled": true,
+                "start": 0.85,
+                "end": 1,
+                "gain": 1.1,
+                "blend": 0.06
+            }
+        },
+        "x": {
+            "curve": {
+                "type": "linear",
+                "exponent": 1.0,
+                "k": 0.0,
+                "points": []
+            },
+            "fine": {
+                "enabled": false,
+                "start": 0.0,
+                "end": 0.25,
+                "gain": 0.6,
+                "blend": 0.08
+            },
+            "fast": {
+                "enabled": false,
+                "start": 0.8,
+                "end": 1.0,
+                "gain": 1.6,
+                "blend": 0.08
+            }
+        },
+        "y": {
+            "curve": {
+                "type": "linear",
+                "exponent": 1.0,
+                "k": 0.0,
+                "points": []
+            },
+            "fine": {
+                "enabled": false,
+                "start": 0.0,
+                "end": 0.25,
+                "gain": 0.6,
+                "blend": 0.08
+            },
+            "fast": {
+                "enabled": false,
+                "start": 0.8,
+                "end": 1.0,
+                "gain": 1.6,
+                "blend": 0.08
+            }
+        },
+        "sens_x": 1,
+        "sens_y": 1,
+        "smoothing": {
+            "type": "none",
+            "ema_tau_ms": 4.0,
+            "min_cutoff_hz": 3.0,
+            "beta": 0.05,
+            "d_cutoff_hz": 10.0,
+            "flick_bypass_speed": 0.0
+        },
+        "circular_saturation": true,
+        "anti_deadzone": 0
+    },
+    "ads": {
+        "deadzone": {
+            "type": "radial",
+            "inner": 0.02,
+            "outer": 0.97
+        },
+        "curve_mode": "radial",
+        "radial": {
+            "curve": {
+                "type": "power",
+                "exponent": 1.15,
+                "k": 0.0,
+                "points": []
+            },
+            "fine": {
+                "enabled": false,
+                "start": 0,
+                "end": 0.2,
+                "gain": 0.8,
+                "blend": 0.06
+            },
+            "fast": {
+                "enabled": false,
+                "start": 0.85,
+                "end": 1,
+                "gain": 1.3,
+                "blend": 0.06
+            }
+        },
+        "x": {
+            "curve": {
+                "type": "linear",
+                "exponent": 1.0,
+                "k": 0.0,
+                "points": []
+            },
+            "fine": {
+                "enabled": false,
+                "start": 0.0,
+                "end": 0.25,
+                "gain": 0.6,
+                "blend": 0.08
+            },
+            "fast": {
+                "enabled": false,
+                "start": 0.8,
+                "end": 1.0,
+                "gain": 1.6,
+                "blend": 0.08
+            }
+        },
+        "y": {
+            "curve": {
+                "type": "linear",
+                "exponent": 1.0,
+                "k": 0.0,
+                "points": []
+            },
+            "fine": {
+                "enabled": false,
+                "start": 0.0,
+                "end": 0.25,
+                "gain": 0.6,
+                "blend": 0.08
+            },
+            "fast": {
+                "enabled": false,
+                "start": 0.8,
+                "end": 1.0,
+                "gain": 1.6,
+                "blend": 0.08
+            }
+        },
+        "sens_x": 1,
+        "sens_y": 1,
+        "smoothing": {
+            "type": "none",
+            "ema_tau_ms": 4.0,
+            "min_cutoff_hz": 3.0,
+            "beta": 0.05,
+            "d_cutoff_hz": 10.0,
+            "flick_bypass_speed": 0.0
+        },
+        "circular_saturation": true,
+        "anti_deadzone": 0
+    },
+    "ads_from_left_trigger": true,
+    "ads_enter": 0.12,
+    "ads_exit": 0.06,
+    "context_transition_ms": 0,
+    "move_stick": {
+        "type": "radial",
+        "inner": 0.05,
+        "outer": 0.97
+    },
+    "left_trigger": {
+        "inner": 0.0,
+        "outer": 1.0
+    },
+    "right_trigger": {
+        "inner": 0.0,
+        "outer": 1.0
+    }
+}
