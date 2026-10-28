@@ -16,6 +16,7 @@
 #include "app_controller.hpp"
 #include "pages/pages.hpp"
 #include "stickyaim/core/config_io.hpp"
+#include "license_ui.hpp"
 #include "stickyaim/platform/license.hpp"
 #include "stickyaim/platform/system_probe.hpp"
 #include "stickyaim/platform/vigem_sink.hpp"
@@ -120,7 +121,7 @@ SettingsPage::SettingsPage(AppController* app, QWidget* parent) : QWidget(parent
     about->addRow(T("Language"), lang, T("Change it on the start screen."));
     const auto lic = sa::win::license::installedLicense();
     auto* licLabel = new QLabel(!lic.valid ? T("Not activated yet.")
-                                : lic.expiryDay ? QString(T("Active until %1")).arg(QString::fromStdString(sa::win::license::dayToString(lic.expiryDay)))
+                                : lic.timed() ? QString(T("Test license until %1 (%2 left)")).arg(license_ui::expiryText(lic), license_ui::remainingText(lic))
                                                 : T("Active, no expiry"));
     licLabel->setObjectName("rowSubtitle");
     about->addRow(T("License"), licLabel, QString(T("This machine ID: %1")).arg(QString::fromStdString(sa::win::license::machineId())));

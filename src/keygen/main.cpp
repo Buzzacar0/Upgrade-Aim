@@ -4,13 +4,16 @@
 // and issues activation codes. GUI by default; command line:
 //   upgradeaim-keygen --init                 create the key pair and write the
 //                                            public key into the app sources
-//   upgradeaim-keygen --issue [--machine ID] [--days N] [--name TEXT]
+//   upgradeaim-keygen --issue --machine ID [--minutes N] [--hours N] [--days N] [--name TEXT]
+//                                            (no duration = permanent)
 //   upgradeaim-keygen --machine-id           print this PC's machine ID
 #include <windows.h>
 #include <shellapi.h>
 
 #include <QApplication>
 #include <QClipboard>
+#include <QComboBox>
+#include <QTimer>
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -79,7 +82,7 @@ QString init(bool* created) {
     return {};
 }
 
-std::uint32_t nextSerial() {
+std::uint16_t nextSerial() {
     QFile f(keyDir() + "/issued.csv");
     std::uint32_t n = 1;
     if (f.open(QIODevice::ReadOnly)) {
@@ -88,27 +91,31 @@ std::uint32_t nextSerial() {
             if (!line.startsWith("serial")) ++n;
         }
     }
-    return n;
+    return static_cast<std::uint16_t>(std::min<std::uint32_t>(n, 0xFFFF));
 }
 
-QString issueAndLog(const QString& name, const QString& machineText, int days, QString* error) {
+QString localTime(std::int64_t minute) {
+    return QDateTime::fromSecsSinceEpoch(lic::toUnixSeconds(minute)).toLocalTime().toString("dd/MM/yyyy HH:mm");
+}
+
+// durationMinutes 0 = permanent. Returns the code; *expiresMinute is set.
+QString issueAndLog(const QString& name, const QString& machineText, std::int64_t durationMinutes, QString* error,
+                    std::int64_t* expiresMinute = nullptr) {
     std::vector<std::uint8_t> priv;
     if (!loadPrivateKey(priv)) {
-        *error = "No private key yet. Run --init first.";
+        *error = "Ainda não existe chave privada. Rode --init primeiro.";
         return {};
     }
-    std::optional<lic::MachineHash> machine;
-    if (!machineText.trimmed().isEmpty()) {
-        machine = lic::parseMachineId(machineText.toStdString());
-        if (!machine) {
-            *error = "The machine ID must have 16 hexadecimal characters (XXXX-XXXX-XXXX-XXXX).";
-            return {};
-        }
+    const auto machine = lic::parseMachineId(machineText.toStdString());
+    if (!machine) {
+        *error = "O ID da máquina é obrigatório e tem 16 caracteres (XXXX-XXXX-XXXX-XXXX). O cliente vê esse ID na tela de ativação.";
+        return {};
     }
-    const int expiry = days > 0 ? lic::today() + days : 0;
-    const std::uint32_t serial = nextSerial();
+    const std::int64_t expires = durationMinutes > 0 ? lic::nowMinute() + durationMinutes : 0;
+    if (expiresMinute) *expiresMinute = expires;
+    const std::uint16_t serial = nextSerial();
     std::string err;
-    const QString code = QString::fromStdString(lic::issue(priv, serial, machine, expiry, &err));
+    const QString code = QString::fromStdString(lic::issue(priv, serial, *machine, expires, &err));
     if (code.isEmpty()) {
         *error = QString::fromStdString(err);
         return {};
@@ -118,13 +125,11 @@ QString issueAndLog(const QString& name, const QString& machineText, int days, Q
     if (log.open(QIODevice::Append | QIODevice::Text)) {
         QTextStream out(&log);
         if (fresh) out << "serial;date;name;machine;expires;code\n";
-        out << serial << ";" << QDate::currentDate().toString(Qt::ISODate) << ";" << QString(name).replace(';', ',') << ";"
-            << (machine ? machineText.trimmed().toUpper() : QString("any")) << ";"
-            << (expiry ? QString::fromStdString(lic::dayToString(expiry)) : QString("never")) << ";" << code << "\n";
+        out << serial << ";" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm") << ";" << QString(name).replace(';', ',')
+            << ";" << machineText.trimmed().toUpper() << ";" << (expires ? localTime(expires) : QString("never")) << ";" << code << "\n";
     }
     return code;
 }
-
 int runCli(const QStringList& args) {
     if (args.contains("--machine-id")) {
         std::printf("%s\n", lic::machineId().c_str());
@@ -145,7 +150,9 @@ int runCli(const QStringList& args) {
         return i >= 0 && i + 1 < args.size() ? args[i + 1] : QString();
     };
     QString error;
-    const QString code = issueAndLog(value("--name"), value("--machine"), value("--days").toInt(), &error);
+    const std::int64_t minutes = value("--minutes").toLongLong() + value("--hours").toLongLong() * 60 + value("--days").toLongLong() * 1440;
+    std::int64_t expires = 0;
+    const QString code = issueAndLog(value("--name"), value("--machine"), minutes, &error, &expires);
     if (code.isEmpty()) {
         std::fprintf(stderr, "%s\n", qPrintable(error));
         return 1;
@@ -183,7 +190,7 @@ int main(int argc, char** argv) {
     QWidget w;
     w.setWindowTitle("Upgrade Aim — gerador de códigos");
     w.setStyleSheet("QWidget { background: #1C1C1F; color: #F5F5F7; font-family: 'Segoe UI Variable Text', 'Segoe UI'; font-size: 13px; }"
-                    "QLineEdit, QSpinBox, QPlainTextEdit { background: #2A2A2E; border: 1px solid transparent; border-radius: 7px; padding: 6px 9px; }"
+                    "QLineEdit, QSpinBox, QComboBox, QPlainTextEdit { background: #2A2A2E; border: 1px solid transparent; border-radius: 7px; padding: 6px 9px; }"
                     "QLineEdit:focus, QSpinBox:focus { border: 1px solid #0A84FF; }"
                     "QPushButton { background: #0A84FF; color: white; border: none; border-radius: 8px; padding: 8px 18px; font-weight: 600; }"
                     "QPushButton#secondary { background: #2A2A2E; font-weight: 500; }"
@@ -199,17 +206,40 @@ int main(int argc, char** argv) {
     auto* name = new QLineEdit;
     name->setPlaceholderText("Nome ou e-mail do cliente (só para o seu registro)");
     auto* machine = new QLineEdit;
-    machine->setPlaceholderText("XXXX-XXXX-XXXX-XXXX (vazio = qualquer PC)");
-    auto* days = new QSpinBox;
-    days->setRange(0, 3650);
-    days->setSuffix(" dias");
-    days->setSpecialValueText("Sem validade");
+    machine->setPlaceholderText("XXXX-XXXX-XXXX-XXXX (obrigatório)");
+    auto* amount = new QSpinBox;
+    amount->setRange(1, 100000);
+    amount->setValue(1);
+    auto* unit = new QComboBox;
+    unit->addItems({"minutos", "horas", "dias", "permanente (sem validade)"});
+    unit->setCurrentIndex(1);
+    auto* timeRow = new QHBoxLayout;
+    timeRow->addWidget(amount);
+    timeRow->addWidget(unit, 1);
+    auto* expiresLabel = new QLabel;
+    expiresLabel->setObjectName("muted");
     form->addRow("Cliente", name);
     form->addRow("ID da máquina", machine);
-    form->addRow("Validade", days);
+    form->addRow("Tempo de uso", timeRow);
+    form->addRow("", expiresLabel);
     root->addLayout(form);
-    auto* hint = new QLabel("O cliente vê o ID da máquina na tela de ativação do app. Com o ID preenchido, o código só funciona "
-                            "naquele PC.");
+    const std::int64_t unitMinutes[] = {1, 60, 1440, 0};
+    auto duration = [=] { return unitMinutes[unit->currentIndex()] * amount->value(); };
+    auto updateExpiry = [=] {
+        amount->setEnabled(unit->currentIndex() != 3);
+        const std::int64_t d = duration();
+        expiresLabel->setText(d ? "Se gerar agora, expira em " + localTime(lic::nowMinute() + d) +
+                                      ". Quando acabar, o app trava naquele PC e o código não volta a funcionar lá."
+                                : "Código permanente: não expira.");
+    };
+    QObject::connect(amount, &QSpinBox::valueChanged, &w, updateExpiry);
+    QObject::connect(unit, &QComboBox::currentIndexChanged, &w, updateExpiry);
+    auto* tick = new QTimer(&w);
+    QObject::connect(tick, &QTimer::timeout, &w, updateExpiry);
+    tick->start(15000);
+    updateExpiry();
+    auto* hint = new QLabel("O cliente vê o ID da máquina na tela de ativação do app. O código só funciona naquele PC. "
+                            "O tempo conta a partir de agora, não da ativação.");
     hint->setObjectName("muted");
     hint->setWordWrap(true);
     root->addWidget(hint);
@@ -235,14 +265,15 @@ int main(int argc, char** argv) {
 
     QObject::connect(gen, &QPushButton::clicked, &w, [&] {
         QString error;
-        const QString code = issueAndLog(name->text(), machine->text(), days->value(), &error);
+        std::int64_t expires = 0;
+        const QString code = issueAndLog(name->text(), machine->text(), duration(), &error, &expires);
         if (code.isEmpty()) {
             QMessageBox::warning(&w, "Upgrade Aim — gerador", error);
             return;
         }
-        out->setPlainText(code);
+        out->setPlainText(code + "\n\n" + (expires ? "Expira em " + localTime(expires) : QString("Permanente")));
     });
-    QObject::connect(copy, &QPushButton::clicked, &w, [&] { QGuiApplication::clipboard()->setText(out->toPlainText()); });
+    QObject::connect(copy, &QPushButton::clicked, &w, [&] { QGuiApplication::clipboard()->setText(out->toPlainText().section('\n', 0, 0)); });
     QObject::connect(openDir, &QPushButton::clicked, &w, [] {
         ShellExecuteW(nullptr, L"open", reinterpret_cast<LPCWSTR>(keyDir().utf16()), nullptr, nullptr, SW_SHOWNORMAL);
     });

@@ -2,6 +2,8 @@
 
 #include <QMainWindow>
 
+#include "stickyaim/platform/license.hpp"
+
 class AppController;
 class QLabel;
 class QListWidget;
@@ -28,6 +30,8 @@ private:
     void showToast(const QString& text, int ms = 4000);  // transient message at the bottom of the window
     void placeToast();
     void refreshModePill();
+    void checkLicense();  // every 30 s: locks the app when the code expires
+    void lockApp();
 
     AppController* app_;
     QListWidget* nav_;
@@ -35,4 +39,7 @@ private:
     QLabel* toast_;
     QTimer* toastTimer_;
     QLabel* modePill_;
+    QLabel* licenseInfo_;  // remaining time of a test code, under the mode pill
+    sa::win::license::Info license_;
+    bool expiryWarned_ = false;
 };

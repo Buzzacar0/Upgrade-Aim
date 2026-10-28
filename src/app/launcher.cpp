@@ -17,6 +17,7 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
+#include "license_ui.hpp"
 #include "stickyaim/platform/license.hpp"
 #include "stickyaim/platform/win_util.hpp"
 #include "widgets/ui_helpers.hpp"
@@ -177,7 +178,7 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
 
 void Launcher::activate() {
     const std::string code = code_->text().trimmed().toStdString();
-    const auto info = sa::win::license::verifyCode(code);
+    const auto info = sa::win::license::evaluate(code);
     if (!info.valid) {
         activationError_->setText(lang_ == i18n::Lang::En ? QString::fromStdString(info.error) : T(info.error.c_str()));
         return;
@@ -213,12 +214,17 @@ void Launcher::retranslate() {
     copyId_->setText(L(lang_, "Copiar", "Copy"));
     code_->setPlaceholderText(L(lang_, "Cole aqui o seu código de ativação (UA1-…)", "Paste your activation code here (UA1-…)"));
     activate_->setText(L(lang_, "Ativar", "Activate"));
-    if (!active) activationError_->clear();
+    // Explain why the app is locked (expired test code, clock set back, ...).
+    if (!active)
+        activationError_->setText(license_.error.empty() || license_.error == "Not activated yet."
+                                      ? QString()
+                                      : (lang_ == i18n::Lang::En ? QString::fromStdString(license_.error) : T(license_.error.c_str())));
     QString licenseText;
     if (active)
-        licenseText = license_.expiryDay ? L(lang_, "Licença ativa até ", "License active until ") +
-                                               QString::fromStdString(sa::win::license::dayToString(license_.expiryDay))
-                                         : L(lang_, "Licença ativa.", "License active.");
+        licenseText = license_.timed() ? L(lang_, "Licença de teste até ", "Test license until ") + license_ui::expiryText(license_) +
+                                             L(lang_, " (faltam ", " (") + license_ui::remainingText(license_) +
+                                             L(lang_, ").", " left).")
+                                       : L(lang_, "Licença ativa.", "License active.");
     else
         licenseText = L(lang_, "Envie o ID desta máquina para quem te vendeu o Upgrade Aim e cole aqui o código que você receber.",
                         "Send this machine ID to whoever sold you Upgrade Aim and paste the code you receive here.");

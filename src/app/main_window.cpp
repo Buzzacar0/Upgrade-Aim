@@ -20,6 +20,9 @@
 #include "app_controller.hpp"
 #include "pages/pages.hpp"
 #include "widgets/ui_helpers.hpp"
+#include "launcher.hpp"
+#include "license_ui.hpp"
+#include "stickyaim/core/logger.hpp"
 
 #include <functional>
 #include <memory>
@@ -84,6 +87,10 @@ MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent
     pillRow->setContentsMargins(18, 0, 18, 0);
     pillRow->addWidget(modePill_);
     side->addLayout(pillRow);
+    licenseInfo_ = new QLabel;
+    licenseInfo_->setAlignment(Qt::AlignCenter);
+    licenseInfo_->setStyleSheet("font-size: 11px; color: #8E8E93; padding-top: 6px;");
+    side->addWidget(licenseInfo_);
     layout->addWidget(sidebar);
 
     stack_ = new QStackedWidget;
@@ -151,8 +158,42 @@ MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent
     connect(app_, &AppController::engineStateChanged, this, &MainWindow::refreshModePill);
     refreshModePill();
 
+    license_ = sa::win::license::installedLicense();
+    auto* licenseTimer = new QTimer(this);
+    connect(licenseTimer, &QTimer::timeout, this, &MainWindow::checkLicense);
+    licenseTimer->start(30000);
+
     ui::applyWindowChrome(this);
     registerHotkeys();
+}
+
+void MainWindow::checkLicense() {
+    license_ = sa::win::license::installedLicense();
+    if (!license_.valid) {
+        lockApp();
+        return;
+    }
+    if (license_.timed() && license_ui::minutesLeft(license_) <= 5 && !expiryWarned_) {
+        expiryWarned_ = true;
+        showToast(QString(T("Your test period ends in %1.")).arg(license_ui::remainingText(license_)), 10000);
+    }
+}
+
+void MainWindow::lockApp() {
+    // Same safety path as closing the app: centre the output and remove the
+    // virtual controller, then ask for a new code on the start screen.
+    app_->stopEngine();
+    hide();
+    sa::logInfo("app", "license no longer valid, app locked: " + license_.error);
+    Launcher launcher;
+    if (launcher.exec() != QDialog::Accepted) {
+        qApp->quit();
+        return;
+    }
+    license_ = sa::win::license::installedLicense();
+    expiryWarned_ = false;
+    app_->startEngine(nullptr);
+    show();
 }
 
 void MainWindow::refreshModePill() {
@@ -176,6 +217,8 @@ void MainWindow::refreshModePill() {
         modePill_->style()->polish(modePill_);
     }
     if (modePill_->text() != text) modePill_->setText(text);
+    const QString lic = license_.valid && license_.timed() ? QString(T("Test: %1 left")).arg(license_ui::remainingText(license_)) : QString();
+    if (licenseInfo_->text() != lic) licenseInfo_->setText(lic);
 }
 
 void MainWindow::showToast(const QString& text, int ms) {

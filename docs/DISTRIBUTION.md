@@ -42,17 +42,33 @@ Dê dois cliques em **`Gerador de codigos.bat`**, na pasta do projeto:
 | Campo | O que colocar |
 | --- | --- |
 | Cliente | nome ou e-mail, só para o seu registro |
-| ID da máquina | o ID que o cliente te mandou. Vazio = o código funciona em qualquer PC (não recomendado) |
-| Validade | dias até expirar. "Sem validade" = permanente |
+| ID da máquina | **obrigatório**: o ID que o cliente te mandou. O código só funciona naquele PC |
+| Tempo de uso | um número e a unidade (**minutos**, **horas** ou **dias**), ou **permanente** |
 
-Clique em **Gerar código** e depois em **Copiar**. Todo código emitido fica registrado em `%APPDATA%\UpgradeAim Keygen\issued.csv` (número, data, cliente, máquina, validade, código).
+Embaixo aparece a hora exata em que o código vai expirar se você gerar agora. **O tempo conta a partir do momento em que você gera**, não da ativação. Clique em **Gerar código** e depois em **Copiar**. Todo código emitido fica registrado em `%APPDATA%\UpgradeAim Keygen\issued.csv` (número, data e hora, cliente, máquina, expiração, código).
 
-Pela linha de comando:
+Pela linha de comando (sem duração = permanente):
 
 ```bash
-dist\keygen\upgradeaim-keygen.exe --issue --machine 825C-A5A8-45FB-86BF --days 30 --name "Cliente X"
+dist\keygen\upgradeaim-keygen.exe --issue --machine 825C-A5A8-45FB-86BF --hours 2 --name "Teste do Cliente X"
 ```
 
+Também aceita `--minutes N` e `--days N`, que podem ser somados.
+
+### Códigos de teste: o que acontece quando o tempo acaba
+
+- **Com o app aberto:** ele confere a licença a cada 30 segundos e avisa 5 minutos antes de acabar. Quando acaba, para o motor, centraliza a saída, remove o controle virtual e volta para a tela de ativação com "Este código de ativação expirou." Para voltar a usar, só com um código novo.
+- **Ao abrir o app:** com o código expirado, ele não passa da tela de ativação.
+- **Trava na máquina:** o primeiro código que expira num PC fica registrado nele (no registro do Windows, em `HKCU\Software\UpgradeAim\License`, e em `%LOCALAPPDATA%\UpgradeAim\state.dat`). Mesmo que a pessoa atrase o relógio, o app mostra "Este código de teste já expirou neste computador." Reinstalar o app não apaga esse registro.
+- **Relógio atrasado:** o app guarda a hora mais avançada que já viu naquele PC. Se o relógio voltar para antes disso, os códigos de teste param com "A data e a hora deste PC foram atrasadas."
+- O tempo restante aparece na barra lateral ("Teste: faltam 1 h 20 min"), na tela inicial e em Configurações → Sobre.
+- Códigos permanentes não dependem do relógio.
+
+Verificado em 28/10/2026 neste PC:
+- um código de 2 minutos travou o app aberto, com o motor parado e a tela de ativação mostrando "expirou";
+- um código válido com o número marcado como expirado neste PC foi recusado;
+- um relógio 2 h antes da última hora vista foi recusado;
+- um código de 1 hora válido abriu normalmente, mostrando "faltam 1 h 0 min".
 ### A sua chave privada
 
 - Fica em **`%APPDATA%\UpgradeAim Keygen\private.key`** (104 bytes). Ela **não** está no projeto nem no GitHub (`*.key` está no `.gitignore`).
@@ -63,7 +79,7 @@ dist\keygen\upgradeaim-keygen.exe --issue --machine 825C-A5A8-45FB-86BF --days 3
 ### Limites (seja honesto com os clientes)
 
 - A verificação é offline. Alguém com conhecimento técnico pode modificar o executável para pular a ativação. O sistema impede o compartilhamento casual de códigos, não a pirataria determinada.
-- A data de validade usa o relógio do PC do cliente.
+- A validade usa o relógio do PC do cliente. Atrasar o relógio é detectado depois que o app já viu uma hora mais avançada naquele PC. Se a pessoa apagar o registro e o arquivo de estado e ainda atrasar o relógio antes de abrir o app, consegue estender um teste. É o limite de uma verificação sem servidor.
 - Trocar a placa-mãe ou reinstalar o Windows muda o ID da máquina, e o cliente vai precisar de um código novo.
 
 ## "Esconder o controle dos jogos" (HidHide em um clique)
