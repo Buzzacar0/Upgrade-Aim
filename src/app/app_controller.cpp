@@ -323,7 +323,7 @@ std::unique_ptr<sa::IInputSource> AppController::makeSource() const {
 }
 
 bool AppController::startEngine(QString* error) {
-    stopEngine();
+    shutdownEngine();  // a restart keeps the controller hidden
     std::unique_ptr<sa::IOutputSink> sink;
     if (output_ == OutputKind::ViGEm) {
         const int physical = source_.kind == SourceKind::XInput ? source_.slot : -1;
@@ -342,11 +342,14 @@ bool AppController::startEngine(QString* error) {
     if (!engine_->start(err)) {
         engine_.reset();
         if (output_ == OutputKind::ViGEm) output_ = OutputKind::Preview;
+        syncHidHide();
         if (error) *error = q(err);
         Q_EMIT statusMessage(T("Engine failed to start: ") + q(err));
         Q_EMIT engineStateChanged();
         return false;
     }
+
+    syncHidHide();
     resetLatencyStats();
     recent_.clear();
     haveSeq_ = false;
@@ -367,12 +370,29 @@ bool AppController::startEngine(QString* error) {
 }
 
 void AppController::stopEngine() {
+    shutdownEngine();
+    syncHidHide();
+}
+
+void AppController::shutdownEngine() {
     if (!engine_) return;
     engine_->stop();
     drainTelemetry();
     engine_.reset();
     sa::logInfo("app", "engine stopped");
     Q_EMIT engineStateChanged();
+}
+
+// The physical controller is hidden from games while the virtual controller
+// runs and shown again otherwise. Each change asks Windows for administrator
+// rights, so it only runs when the wanted state differs from the current one.
+void AppController::syncHidHide() {
+    const bool want = engine_ && output_ == OutputKind::ViGEm;
+    if (want == hidHidden_) return;
+    bool ok = false;
+    const QString msg = setupHidHide(!want, &ok);
+    if (ok) hidHidden_ = want;
+    Q_EMIT statusMessage(msg);
 }
 
 void AppController::restartIfRunning() {
