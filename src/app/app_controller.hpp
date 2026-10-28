@@ -68,6 +68,9 @@ public:
     sa::EngineConfig engineConfig() const { return engineCfg_; }
     void setEngineConfig(const sa::EngineConfig& cfg);  // restarts the engine if running
     QString sourceDescription() const;
+    // Hides the physical controller from games with HidHide (asks Windows for
+    // administrator rights). Returns a message for the user; *ok tells success.
+    QString setupHidHide(bool undo, bool* ok);
     QString matchedDeviceName() const;  // cached; see refreshDeviceMatch()
     void refreshDeviceMatch();          // re-enumerates HID devices (slow: call on changes only)
 

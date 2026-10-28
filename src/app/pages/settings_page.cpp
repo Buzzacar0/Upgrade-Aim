@@ -16,6 +16,7 @@
 #include "app_controller.hpp"
 #include "pages/pages.hpp"
 #include "stickyaim/core/config_io.hpp"
+#include "stickyaim/platform/license.hpp"
 #include "stickyaim/platform/system_probe.hpp"
 #include "stickyaim/platform/vigem_sink.hpp"
 #include "widgets/grouped_list.hpp"
@@ -59,8 +60,29 @@ SettingsPage::SettingsPage(AppController* app, QWidget* parent) : QWidget(parent
     forwardRumble_->setChecked(true);
     forwardRumble_->setEnabled(false);
     out->addRow(T("Forward rumble to the controller"), forwardRumble_, T("Always on in this version."));
+    auto* hideBox = new QWidget;
+    hideBox->setObjectName("groupRow");
+    auto* hideL = new QHBoxLayout(hideBox);
+    hideL->setContentsMargins(0, 0, 0, 0);
+    hideL->setSpacing(8);
+    auto* hideBtn = new QPushButton(T("Set up"));
+    hideBtn->setProperty("primary", true);
+    auto* unhideBtn = new QPushButton(T("Undo"));
+    hideL->addWidget(hideBtn);
+    hideL->addWidget(unhideBtn);
+    out->addRow(T("Hide the controller from games"), hideBox,
+                T("Uses HidHide so games only see Upgrade Aim's virtual controller. Windows asks for administrator permission."));
     outputStatus_ = out->footerLabel();
     col->addWidget(out);
+    auto runHide = [this](bool undo) {
+        bool ok = false;
+        const QString msg = app_->setupHidHide(undo, &ok);
+        if (ok) QMessageBox::information(this, T("Hide the controller from games"), msg);
+        else QMessageBox::warning(this, T("Hide the controller from games"), msg);
+        refresh();
+    };
+    connect(hideBtn, &QPushButton::clicked, this, [runHide] { runHide(false); });
+    connect(unhideBtn, &QPushButton::clicked, this, [runHide] { runHide(true); });
 
     // ---- safety
     auto* safety = new ui::Group(T("Safety"));
@@ -96,6 +118,12 @@ SettingsPage::SettingsPage(AppController* app, QWidget* parent) : QWidget(parent
     auto* lang = new QLabel(i18n::language() == i18n::Lang::En ? "English" : "Português (Brasil)");
     lang->setObjectName("rowSubtitle");
     about->addRow(T("Language"), lang, T("Change it on the start screen."));
+    const auto lic = sa::win::license::installedLicense();
+    auto* licLabel = new QLabel(!lic.valid ? T("Not activated yet.")
+                                : lic.expiryDay ? QString(T("Active until %1")).arg(QString::fromStdString(sa::win::license::dayToString(lic.expiryDay)))
+                                                : T("Active, no expiry"));
+    licLabel->setObjectName("rowSubtitle");
+    about->addRow(T("License"), licLabel, QString(T("This machine ID: %1")).arg(QString::fromStdString(sa::win::license::machineId())));
     col->addWidget(about);
     col->addStretch();
 
@@ -201,6 +229,7 @@ void SettingsPage::refresh() {
                          .arg(sa::win::ViGEmX360Sink::isCompiledIn() ? T("yes") : T("no"));
     if (app_->output() == AppController::OutputKind::ViGEm && app_->engineRunning())
         status += QString(T("<br><b style='color:#FF9F0A'>Virtual controller active.</b>"));
+    status += "<br>" + T("If the game starts from Steam, turn Steam Input off for it: Library → game → Properties → Controller.");
     outputStatus_->setText(status);
     outputStatus_->show();
 }

@@ -12,7 +12,7 @@
   .\scripts\build.ps1 -QtRoot D:\Qt\6.8.3\msvc2022_64 -NoTest
 #>
 param(
-    [ValidateSet('release', 'debug', 'core')]
+    [ValidateSet('release', 'debug', 'core', 'package')]
     [string]$Preset = 'release',
     [string]$QtRoot = $env:QT_ROOT,
     [switch]$NoTest,
@@ -55,7 +55,7 @@ try {
     cmake --build --preset $Preset
     if ($LASTEXITCODE) { throw 'Build failed' }
     if (-not $NoTest) {
-        ctest --preset $(if ($Preset -eq 'core') { 'core' } else { 'release' }) -j 4
+        ctest --preset $(if ($Preset -in 'core', 'package') { $Preset } else { 'release' }) -j 4
         if ($LASTEXITCODE) { throw 'Tests failed' }
     }
     if ($Deploy -and $Preset -ne 'core') {

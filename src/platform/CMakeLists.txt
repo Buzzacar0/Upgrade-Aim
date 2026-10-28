@@ -3,12 +3,14 @@ add_library(stickyaim_platform STATIC
     xinput_source.cpp
     rawinput.cpp
     system_probe.cpp
-    vigem_sink.cpp)
+    vigem_sink.cpp
+    license.cpp
+    hidhide.cpp)
 
 target_include_directories(stickyaim_platform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(stickyaim_platform
     PUBLIC stickyaim::core
-    PRIVATE xinput hid setupapi avrt winmm advapi32 user32 shell32 ole32)
+    PRIVATE xinput hid setupapi avrt winmm advapi32 user32 shell32 ole32 bcrypt cfgmgr32)
 
 if(STICKYAIM_WITH_VIGEM)
     target_link_libraries(stickyaim_platform PRIVATE ViGEmClient)

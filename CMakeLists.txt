@@ -44,6 +44,7 @@ endif()
 
 if(STICKYAIM_BUILD_APP AND WIN32)
     add_subdirectory(src/app)
+    add_subdirectory(src/keygen)
 endif()
 
 if(STICKYAIM_BUILD_TESTS)

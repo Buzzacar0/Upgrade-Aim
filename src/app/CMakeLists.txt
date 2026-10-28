@@ -5,6 +5,7 @@ set(CMAKE_AUTORCC ON)
 
 add_executable(UpgradeAim WIN32
     main.cpp
+    app.rc
     resources/ui.qrc
     i18n.hpp i18n.cpp i18n_pt_br.cpp
     launcher.hpp launcher.cpp

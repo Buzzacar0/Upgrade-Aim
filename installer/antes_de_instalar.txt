@@ -1,0 +1,22 @@
+UPGRADE AIM — ANTES DE INSTALAR
+
+O Upgrade Aim lê o seu controle, ajusta a resposta dos analógicos (deadzones, curvas, sensibilidade) e, se você ativar, entrega o resultado ao jogo por um controle Xbox 360 virtual.
+
+O que este instalador faz:
+  • Instala o Upgrade Aim e o Microsoft Visual C++ Runtime.
+  • Se você deixar marcado, abre os instaladores oficiais do ViGEmBus e do HidHide (Nefarius Software Solutions). Cada um mostra a própria janela, e você confirma.
+
+O que o Upgrade Aim NÃO faz:
+  • Não mira sozinho, não detecta inimigos, não compensa recuo, não tem macros.
+  • Não aumenta a força do aim assist do jogo: ele só remodela o movimento que você faz.
+  • Não se esconde de anti-cheat.
+
+RISCO PARA A SUA CONTA
+Muitos jogos online, incluindo Call of Duty, proíbem softwares ou dispositivos que modificam a entrada do controle. O anti-cheat RICOCHET da Activision procura esse tipo de modificação. Usar o controle virtual no online pode levar ao banimento da sua conta. A decisão e o risco são seus. Por padrão o app começa em pré-visualização segura e não envia nada ao jogo.
+
+Depois de instalar:
+  1. Abra o Upgrade Aim e ative com o seu código (o app mostra o ID da máquina para você enviar ao vendedor).
+  2. Em Configurações: ligue "Permitir controle virtual", escolha "Controle virtual" e clique em "Configurar" em "Esconder o controle dos jogos".
+  3. Se o jogo abre pelo Steam, desligue o Steam Input para ele (Biblioteca → jogo → Propriedades → Controle).
+
+Licenças dos componentes de terceiros: pasta "licenses" dentro da pasta de instalação.

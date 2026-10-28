@@ -4,12 +4,14 @@
 #include <QPixmap>
 
 #include "i18n.hpp"
+#include "stickyaim/platform/license.hpp"
 
 class QLabel;
+class QLineEdit;
 class QPushButton;
 
 // Start screen: background picture at reduced opacity, language choice
-// (Portuguese (Brazil) by default) and Start. The choice and the picture path
+// (Portuguese (Brazil) by default), activation code and Start. The choice and the picture path
 // are remembered in %APPDATA%\UpgradeAim\launcher.ini.
 class Launcher : public QDialog {
     Q_OBJECT
@@ -28,9 +30,16 @@ private:
     void chooseBackground();
     void loadBackground();
     void retranslate();
+    void activate();
 
     i18n::Lang lang_;
     QPixmap background_;
     QLabel *subtitle_, *languageLabel_, *note_;
     QPushButton *pt_, *en_, *start_, *image_;
+    // Activation (shown until a valid code is stored)
+    sa::win::license::Info license_;
+    QWidget* activation_;
+    QLabel *activationTitle_, *machineLabel_, *activationError_;
+    QLineEdit* code_;
+    QPushButton *activate_, *copyId_;
 };

@@ -113,5 +113,6 @@ Os nomes internos do código (namespace `sa`, pastas `include/stickyaim/`, opç�
 - [Testes e o procedimento de comparação original x processado](docs/TESTING.md)
 - [Como adicionar outro controle](docs/ADDING_CONTROLLERS.md)
 - [Solução de problemas](docs/TROUBLESHOOTING.md)
+- [Distribuição: instalador e códigos de ativação](docs/DISTRIBUTION.md)
 
 Ainda não foi escolhida uma licença para este repositório. Os componentes de terceiros mantêm suas próprias licenças (veja [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)).

@@ -8,7 +8,13 @@
 #include <algorithm>
 #include <cmath>
 
+#include <windows.h>
+#include <shellapi.h>
+
+#include <QCoreApplication>
+
 #include "stickyaim/core/analysis.hpp"
+#include "stickyaim/platform/hidhide.hpp"
 #include "stickyaim/core/clock.hpp"
 #include "stickyaim/core/config_io.hpp"
 #include "stickyaim/core/logger.hpp"
@@ -420,6 +426,45 @@ QString AppController::sourceDescription() const {
         case SourceKind::Hid: return T("HID: ") + source_.label;
         default: return T("Demo signal (no hardware)");
     }
+}
+
+QString AppController::setupHidHide(bool undo, bool* ok) {
+    *ok = false;
+    if (!sa::win::hidhide::installed())
+        return T("HidHide is not installed. Install it with the Upgrade Aim installer or from github.com/nefarius/HidHide.");
+    // The physical controller: the HID source's device, or the first game
+    // controller that is not a ViGEm-style virtual Xbox 360 pad.
+    std::uint16_t vid = 0, pid = 0;
+    for (const auto& d : sa::win::enumerateHidDevices(true)) {
+        if (!(d.usagePage == 0x01 && (d.usage == 0x04 || d.usage == 0x05))) continue;
+        if (d.vendorId == 0x045E && d.productId == 0x028E) continue;
+        if (source_.kind == SourceKind::Hid && q(d.path) != source_.hidPath) continue;
+        vid = d.vendorId;
+        pid = d.productId;
+        if (sa::matchDevice(deviceDb_, vid, pid)) break;  // prefer a known controller
+    }
+    if (!vid) return T("No physical controller found to hide. Connect it and select it as the input source on the Dashboard.");
+
+    const std::wstring exe = QCoreApplication::applicationFilePath().replace('/', '\\').toStdWString();
+    wchar_t params[96];
+    swprintf(params, 96, L"--hidhide-setup %04X %04X%s", vid, pid, undo ? L" --undo" : L"");
+    SHELLEXECUTEINFOW sei{sizeof(sei)};
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+    sei.lpVerb = L"runas";  // Windows shows its administrator prompt
+    sei.lpFile = exe.c_str();
+    sei.lpParameters = params;
+    sei.nShow = SW_HIDE;
+    if (!ShellExecuteExW(&sei) || !sei.hProcess) return T("HidHide setup was cancelled or failed.");
+    WaitForSingleObject(sei.hProcess, 30000);
+    DWORD code = 1;
+    GetExitCodeProcess(sei.hProcess, &code);
+    CloseHandle(sei.hProcess);
+    sa::logInfo("app", "hidhide " + std::string(undo ? "undo" : "setup") + " exit " + std::to_string(code));
+    if (code == 3) return T("No physical controller found to hide. Connect it and select it as the input source on the Dashboard.");
+    if (code != 0) return T("HidHide setup was cancelled or failed.");
+    *ok = true;
+    refreshDeviceMatch();
+    return undo ? T("Done: the controller is visible to games again.") : T("Done: games now see only the virtual controller. If a game was open, restart it.");
 }
 
 QString AppController::matchedDeviceName() const { return matchedName_; }

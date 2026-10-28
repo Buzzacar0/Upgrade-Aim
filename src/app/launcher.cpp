@@ -1,6 +1,9 @@
 #include "launcher.hpp"
 
+#include <QClipboard>
 #include <QFileDialog>
+#include <QGuiApplication>
+#include <QLineEdit>
 #include <QFileInfo>
 #include <QFrame>
 #include <QIcon>
@@ -14,6 +17,7 @@
 #include <QSettings>
 #include <QVBoxLayout>
 
+#include "stickyaim/platform/license.hpp"
 #include "stickyaim/platform/win_util.hpp"
 #include "widgets/ui_helpers.hpp"
 
@@ -36,7 +40,7 @@ i18n::Lang Launcher::savedLanguage() {
 
 Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     setWindowTitle("Upgrade Aim");
-    setFixedSize(960, 560);
+    setFixedSize(960, 600);
     setWindowIcon(QIcon(":/ui/app-mark.svg"));
     ui::applyWindowChrome(this);
 
@@ -86,6 +90,48 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     root->addLayout(langRow);
     root->addSpacing(26);
 
+    // Activation: shown until a valid code is stored, in place of Start.
+    activation_ = new QWidget;
+    activation_->setStyleSheet("background: transparent;");
+    auto* act = new QVBoxLayout(activation_);
+    act->setContentsMargins(0, 0, 0, 0);
+    act->setSpacing(8);
+    activationTitle_ = new QLabel;
+    activationTitle_->setStyleSheet("font-size:12px; font-weight:600; color:#98989D; background:transparent;");
+    act->addWidget(activationTitle_);
+    auto* idRow = new QHBoxLayout;
+    idRow->setSpacing(12);
+    machineLabel_ = new QLabel;
+    machineLabel_->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    machineLabel_->setStyleSheet("font-size:14px; color:#F5F5F7; background:transparent;");
+    copyId_ = new QPushButton;
+    copyId_->setCursor(Qt::PointingHandCursor);
+    copyId_->setStyleSheet("QPushButton { font-size:13px; padding:4px 0; border:none; background:transparent; color:#0A84FF; }"
+                           "QPushButton:hover { color:#409CFF; }");
+    idRow->addWidget(machineLabel_);
+    idRow->addWidget(copyId_);
+    idRow->addStretch();
+    act->addLayout(idRow);
+    auto* codeRow = new QHBoxLayout;
+    codeRow->setSpacing(10);
+    code_ = new QLineEdit;
+    code_->setMinimumWidth(520);
+    code_->setStyleSheet("QLineEdit { background: rgba(255,255,255,0.08); color:#F5F5F7; border: 1px solid transparent;"
+                         " border-radius: 8px; padding: 8px 10px; font-size: 13px; }"
+                         "QLineEdit:focus { border: 1px solid #0A84FF; }");
+    activate_ = new QPushButton;
+    activate_->setCursor(Qt::PointingHandCursor);
+    activate_->setStyleSheet("QPushButton { font-size:14px; font-weight:600; padding:8px 26px; border:none; border-radius:8px;"
+                             " background:#0A84FF; color:#FFFFFF; } QPushButton:hover { background:#2E96FF; }");
+    codeRow->addWidget(code_, 1);
+    codeRow->addWidget(activate_);
+    act->addLayout(codeRow);
+    activationError_ = new QLabel;
+    activationError_->setStyleSheet("font-size:12px; color:#FF453A; background:transparent;");
+    act->addWidget(activationError_);
+    root->addWidget(activation_);
+    root->addSpacing(10);
+
     auto* bottom = new QHBoxLayout;
     bottom->setSpacing(18);
     start_ = new QPushButton;
@@ -113,13 +159,36 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     connect(en_, &QPushButton::clicked, this, [this] { setLanguage(i18n::Lang::En); });
     connect(image_, &QPushButton::clicked, this, &Launcher::chooseBackground);
     connect(start_, &QPushButton::clicked, this, [this] {
+        if (!license_.valid) return;
         QSettings ini(iniPath(), QSettings::IniFormat);
         ini.setValue("language", i18n::code(lang_));
         accept();
     });
+    connect(copyId_, &QPushButton::clicked, this, [] {
+        QGuiApplication::clipboard()->setText(QString::fromStdString(sa::win::license::machineId()));
+    });
+    connect(activate_, &QPushButton::clicked, this, &Launcher::activate);
+    connect(code_, &QLineEdit::returnPressed, this, &Launcher::activate);
 
+    license_ = sa::win::license::installedLicense();
     loadBackground();
     setLanguage(lang_);
+}
+
+void Launcher::activate() {
+    const std::string code = code_->text().trimmed().toStdString();
+    const auto info = sa::win::license::verifyCode(code);
+    if (!info.valid) {
+        activationError_->setText(lang_ == i18n::Lang::En ? QString::fromStdString(info.error) : T(info.error.c_str()));
+        return;
+    }
+    std::string err;
+    if (!sa::win::license::saveLicense(code, &err)) {
+        activationError_->setText(QString::fromStdString(err));
+        return;
+    }
+    license_ = info;
+    retranslate();
 }
 
 void Launcher::setLanguage(i18n::Lang lang) {
@@ -135,8 +204,26 @@ void Launcher::retranslate() {
     languageLabel_->setText(L(lang_, "Idioma", "Language"));
     start_->setText(L(lang_, "Iniciar", "Start"));
     image_->setText(L(lang_, "Trocar imagem de fundo…", "Change background image…"));
-    note_->setText(L(lang_,
-                     "Começa em pré-visualização segura: nada é enviado ao jogo até você ativar a saída virtual em Configurações.",
+    const bool active = license_.valid;
+    activation_->setVisible(!active);
+    start_->setVisible(active);
+    activationTitle_->setText(L(lang_, "ATIVAÇÃO", "ACTIVATION"));
+    machineLabel_->setText(L(lang_, "ID desta máquina:  ", "This machine ID:  ") + "<b>" +
+                           QString::fromStdString(sa::win::license::machineId()) + "</b>");
+    copyId_->setText(L(lang_, "Copiar", "Copy"));
+    code_->setPlaceholderText(L(lang_, "Cole aqui o seu código de ativação (UA1-…)", "Paste your activation code here (UA1-…)"));
+    activate_->setText(L(lang_, "Ativar", "Activate"));
+    if (!active) activationError_->clear();
+    QString licenseText;
+    if (active)
+        licenseText = license_.expiryDay ? L(lang_, "Licença ativa até ", "License active until ") +
+                                               QString::fromStdString(sa::win::license::dayToString(license_.expiryDay))
+                                         : L(lang_, "Licença ativa.", "License active.");
+    else
+        licenseText = L(lang_, "Envie o ID desta máquina para quem te vendeu o Upgrade Aim e cole aqui o código que você receber.",
+                        "Send this machine ID to whoever sold you Upgrade Aim and paste the code you receive here.");
+    note_->setText(licenseText + "  " +
+                   L(lang_, "Começa em pré-visualização segura: nada é enviado ao jogo até você ativar a saída virtual em Configurações.",
                      "Starts in safe preview: nothing is sent to the game until you enable virtual output in Settings."));
 }
 

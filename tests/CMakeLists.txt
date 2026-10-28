@@ -14,7 +14,7 @@ include(GoogleTest)
 gtest_discover_tests(stickyaim_core_tests DISCOVERY_TIMEOUT 60)
 
 if(TARGET stickyaim_engine)
-    add_executable(stickyaim_engine_tests test_engine.cpp)
+    add_executable(stickyaim_engine_tests test_engine.cpp test_license.cpp)
     target_link_libraries(stickyaim_engine_tests PRIVATE stickyaim::engine GTest::gtest_main)
     gtest_discover_tests(stickyaim_engine_tests DISCOVERY_TIMEOUT 60)
 endif()

@@ -27,15 +27,23 @@
       "inherits": "base",
       "displayName": "Portable core + tests only (no Qt, no Windows APIs)",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "STICKYAIM_CORE_ONLY": "ON" }
+    },
+    {
+      "name": "package",
+      "inherits": "base",
+      "displayName": "Release build used for the installer (separate folder from build/release)",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     }
   ],
   "buildPresets": [
     { "name": "release", "configurePreset": "release" },
     { "name": "debug", "configurePreset": "debug" },
-    { "name": "core", "configurePreset": "core" }
+    { "name": "core", "configurePreset": "core" },
+    { "name": "package", "configurePreset": "package" }
   ],
   "testPresets": [
     { "name": "release", "configurePreset": "release", "output": { "outputOnFailure": true } },
-    { "name": "core", "configurePreset": "core", "output": { "outputOnFailure": true } }
+    { "name": "core", "configurePreset": "core", "output": { "outputOnFailure": true } },
+    { "name": "package", "configurePreset": "package", "output": { "outputOnFailure": true } }
   ]
 }
