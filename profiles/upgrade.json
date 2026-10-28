@@ -1,7 +1,7 @@
 {
     "schema_version":  1,
     "name":  "Upgrade",
-    "description":  "Máxima precisão, ajustado com as medidas do seu Tarantula 8K: deadzone de 0,02 no analógico direito (o desvio máximo medido em repouso foi 0,016) e 0,05 no esquerdo (em repouso ele chegou a 0,045), para as microcorreções chegarem ao jogo. Curvas mais finas perto do centro (hip 1,4; ADS 1,5) com faixa de ajuste fino, e uma faixa rápida na borda para não perder velocidade de giro. Vertical a 0,95 para segurar melhor a altura da mira. Sem suavização: zero de atraso adicionado. No jogo, use deadzone mínima baixa (2 a 3) e curva Linear para não somar duas curvas.",
+    "description":  "Feito para a mira grudar mais, a partir das medidas do seu Tarantula 8K. Deadzone de 0,02 no analógico direito (o desvio máximo medido parado foi 0,016) e 0,05 no esquerdo. Curvas mais finas perto do centro (hip 1,4; ADS 1,5) com faixa de ajuste fino, e faixa rápida na borda para não perder giro no hip-fire. No ADS a sensibilidade fica em 90 % na horizontal e 85 % na vertical, para a mira ficar mais tempo na área em que o aim assist desacelera. Sem suavização: zero de atraso. Coloque no Painel a deadzone que você usa no jogo: o app compensa para as correções pequenas chegarem ao jogo.",
     "target_device":  "GameSir Tarantula 8K",
     "hip":  {
                 "deadzone":  {
@@ -174,8 +174,8 @@
                                        "blend":  0.08
                                    }
                       },
-                "sens_x":  1,
-                "sens_y":  0.95,
+                "sens_x":  0.9,
+                "sens_y":  0.85,
                 "smoothing":  {
                                   "type":  "none",
                                   "ema_tau_ms":  4.0,

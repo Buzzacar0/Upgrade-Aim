@@ -7,6 +7,7 @@
 #include <QLocale>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QSpinBox>
 #include <QStyle>
 #include <QVBoxLayout>
 
@@ -142,6 +143,23 @@ DashboardPage::DashboardPage(AppController* app, QWidget* parent) : QWidget(pare
     profL->addWidget(context_);
     profL->addStretch();
     bottom->addWidget(profCard, 1);
+
+    // The one number most players change in the game: the app compensates it
+    // so small movements still reach the game and trigger its aim assist.
+    QVBoxLayout* gameL = nullptr;
+    auto* gameCard = ui::card(&gameL);
+    gameL->addWidget(ui::caption(T("Game deadzone (right stick)")));
+    auto* gameDz = new QSpinBox;
+    gameDz->setRange(0, 40);
+    gameDz->setKeyboardTracking(false);
+    gameDz->setFixedWidth(110);
+    gameDz->setValue(app_->gameDeadzonePercent());
+    gameL->addWidget(gameDz);
+    gameL->addWidget(ui::note(T("Type the same value you use in the game. The app compensates it so your small "
+                                "corrections still reach the game and keep its aim assist engaged.")));
+    gameL->addStretch();
+    connect(gameDz, &QSpinBox::valueChanged, this, [this](int v) { app_->setGameDeadzonePercent(v); });
+    bottom->addWidget(gameCard, 1);
 
     QVBoxLayout* engL = nullptr;
     auto* engCard = ui::card(&engL);

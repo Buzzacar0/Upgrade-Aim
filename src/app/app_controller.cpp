@@ -207,7 +207,7 @@ void AppController::setProfile(const sa::Profile& p) {
 void AppController::publishCompiled() {
     if (!engine_) return;
     std::vector<std::string> errs;
-    auto cp = sa::CompiledProfile::compile(profile_, calibration_, &errs);
+    auto cp = sa::CompiledProfile::compile(effectiveProfile(), calibration_, &errs);
     if (!cp) {
         Q_EMIT statusMessage(T("Profile not applied: ") + q(errs.front()));
         return;
@@ -239,6 +239,25 @@ void AppController::resetResponseWindow() {
     addedSumUs_ = 0;
     addedCount_ = 0;
     addedWorstHist_.reset();
+}
+
+int AppController::gameDeadzonePercent() const { return settings_.value("game_deadzone_right", 0); }
+
+void AppController::setGameDeadzonePercent(int percent) {
+    settings_["game_deadzone_right"] = std::clamp(percent, 0, 40);
+    saveSettings();
+    publishTimer_.start();
+    Q_EMIT profileChanged();
+}
+
+// The profile as the engine runs it: the aim stick's anti-deadzone is raised
+// to the deadzone set in the game, so every deliberate movement (beyond this
+// app's own noise deadzone) clears the game's deadzone instead of being cut.
+sa::Profile AppController::effectiveProfile() const {
+    sa::Profile p = profile_;
+    const float game = static_cast<float>(gameDeadzonePercent()) / 100.0f;
+    for (auto* c : {&p.hip, &p.ads}) c->antiDeadzone = std::min(0.4f, std::max(c->antiDeadzone, game));
+    return p;
 }
 
 void AppController::setCalibration(const sa::DeviceCalibration& c) {
@@ -309,7 +328,7 @@ bool AppController::startEngine(QString* error) {
     engine_ = std::make_unique<sa::Engine>(makeSource(), std::move(sink), engineCfg_);
     engine_->setBypass(settings_.value("bypass", false));
     std::vector<std::string> errs;
-    if (auto cp = sa::CompiledProfile::compile(profile_, calibration_, &errs)) {
+    if (auto cp = sa::CompiledProfile::compile(effectiveProfile(), calibration_, &errs)) {
         measureSmoothingLag(*cp);
         engine_->publishProfile(std::move(cp));
     }

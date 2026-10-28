@@ -209,6 +209,12 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"Active profile", "Perfil ativo"},
     {"Ctrl+Alt+1…9 switches to the n-th profile in this list instantly.",
      "Ctrl+Alt+1…9 troca na hora para o perfil de número correspondente nesta lista."},
+    {"Game deadzone (right stick)", "Deadzone do jogo (analógico direito)"},
+    {"Type the same value you use in the game. The app compensates it so your small corrections still reach the game and "
+     "keep its aim assist engaged.",
+     "Digite o mesmo valor que você usa no jogo. O app compensa essa deadzone para as suas correções pequenas chegarem ao jogo "
+     "e manterem o aim assist dele ativo."},
+
     // ---- grouped-list redesign
     {"Where the processed input goes, safety controls and app data.",
      "Para onde vai a entrada processada, controles de segurança e dados do app."},

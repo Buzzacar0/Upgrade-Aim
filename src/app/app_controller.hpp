@@ -39,6 +39,11 @@ public:
     void setProfile(const sa::Profile& p);  // validates, compiles (debounced), publishes
     QStringList profileErrors() const { return errors_; }
     const sa::DeviceCalibration& calibration() const { return calibration_; }
+    // Right-stick deadzone the player set in the game (0-40 %). The engine
+    // compensates it with anti-deadzone; see effectiveProfile().
+    int gameDeadzonePercent() const;
+    void setGameDeadzonePercent(int percent);
+    sa::Profile effectiveProfile() const;
     void setCalibration(const sa::DeviceCalibration& c);
     QString profilePath() const { return profilePath_; }
     bool profileDirty() const { return dirty_; }
