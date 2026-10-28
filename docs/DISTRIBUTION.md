@@ -42,7 +42,7 @@ Dê dois cliques em **`Gerador de codigos.bat`**, na pasta do projeto:
 | Campo | O que colocar |
 | --- | --- |
 | Cliente | nome ou e-mail, só para o seu registro |
-| ID da máquina | **obrigatório**: o ID que o cliente te mandou. O código só funciona naquele PC |
+| ID da máquina | **obrigatório**. Na tela de ativação, o cliente clica em **Copiar pedido de ativação** e te manda a mensagem pronta ("Olá! Quero ativar o Upgrade Aim. O ID da minha máquina é 825C-…"). Cole a mensagem inteira: o gerador separa o ID sozinho. O código só funciona naquele PC |
 | Tempo de uso | um número e a unidade (**minutos**, **horas** ou **dias**), ou **permanente** |
 
 Embaixo aparece a hora exata em que o código vai expirar se você gerar agora. **O tempo conta a partir do momento em que você gera**, não da ativação. Clique em **Gerar código** e depois em **Copiar**. Todo código emitido fica registrado em `%APPDATA%\UpgradeAim Keygen\issued.csv` (número, data e hora, cliente, máquina, expiração, código).

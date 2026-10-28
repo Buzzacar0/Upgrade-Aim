@@ -24,6 +24,7 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QSpinBox>
 #include <QTextStream>
 #include <QVBoxLayout>
@@ -94,6 +95,13 @@ std::uint16_t nextSerial() {
     return static_cast<std::uint16_t>(std::min<std::uint32_t>(n, 0xFFFF));
 }
 
+// Finds XXXX-XXXX-XXXX-XXXX anywhere in a pasted message ("Olá! ... ID é 825C-A5A8-45FB-86BF.").
+QString extractMachineId(const QString& text) {
+    static const QRegularExpression re("([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})-([0-9A-Fa-f]{4})");
+    const auto m = re.match(text);
+    return m.hasMatch() ? m.captured(0).toUpper() : text.trimmed();
+}
+
 QString localTime(std::int64_t minute) {
     return QDateTime::fromSecsSinceEpoch(lic::toUnixSeconds(minute)).toLocalTime().toString("dd/MM/yyyy HH:mm");
 }
@@ -106,7 +114,8 @@ QString issueAndLog(const QString& name, const QString& machineText, std::int64_
         *error = "Ainda não existe chave privada. Rode --init primeiro.";
         return {};
     }
-    const auto machine = lic::parseMachineId(machineText.toStdString());
+    const QString machineId = extractMachineId(machineText);
+    const auto machine = lic::parseMachineId(machineId.toStdString());
     if (!machine) {
         *error = "O ID da máquina é obrigatório e tem 16 caracteres (XXXX-XXXX-XXXX-XXXX). O cliente vê esse ID na tela de ativação.";
         return {};
@@ -126,7 +135,7 @@ QString issueAndLog(const QString& name, const QString& machineText, std::int64_
         QTextStream out(&log);
         if (fresh) out << "serial;date;name;machine;expires;code\n";
         out << serial << ";" << QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm") << ";" << QString(name).replace(';', ',')
-            << ";" << machineText.trimmed().toUpper() << ";" << (expires ? localTime(expires) : QString("never")) << ";" << code << "\n";
+            << ";" << machineId << ";" << (expires ? localTime(expires) : QString("never")) << ";" << code << "\n";
     }
     return code;
 }
@@ -206,7 +215,11 @@ int main(int argc, char** argv) {
     auto* name = new QLineEdit;
     name->setPlaceholderText("Nome ou e-mail do cliente (só para o seu registro)");
     auto* machine = new QLineEdit;
-    machine->setPlaceholderText("XXXX-XXXX-XXXX-XXXX (obrigatório)");
+    machine->setPlaceholderText("Cole aqui a mensagem do cliente ou o ID (XXXX-XXXX-XXXX-XXXX)");
+    QObject::connect(machine, &QLineEdit::textChanged, &w, [machine](const QString& t) {
+        const QString id = extractMachineId(t);
+        if (id != t && id.size() == 19) machine->setText(id);  // keep only the ID from a pasted message
+    });
     auto* amount = new QSpinBox;
     amount->setRange(1, 100000);
     amount->setValue(1);
@@ -238,7 +251,8 @@ int main(int argc, char** argv) {
     QObject::connect(tick, &QTimer::timeout, &w, updateExpiry);
     tick->start(15000);
     updateExpiry();
-    auto* hint = new QLabel("O cliente vê o ID da máquina na tela de ativação do app. O código só funciona naquele PC. "
+    auto* hint = new QLabel("No app, o cliente clica em \"Copiar pedido de ativação\" e te manda a mensagem: cole ela inteira no campo "
+                            "do ID. O código só funciona naquele PC. "
                             "O tempo conta a partir de agora, não da ativação.");
     hint->setObjectName("muted");
     hint->setWordWrap(true);

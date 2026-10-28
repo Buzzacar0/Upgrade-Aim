@@ -15,6 +15,7 @@
 #include <QPainterPath>
 #include <QPushButton>
 #include <QSettings>
+#include <QTimer>
 #include <QVBoxLayout>
 
 #include "license_ui.hpp"
@@ -165,8 +166,12 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
         ini.setValue("language", i18n::code(lang_));
         accept();
     });
-    connect(copyId_, &QPushButton::clicked, this, [] {
-        QGuiApplication::clipboard()->setText(QString::fromStdString(sa::win::license::machineId()));
+    // Ready-made message the customer pastes to the seller (WhatsApp, Discord...).
+    connect(copyId_, &QPushButton::clicked, this, [this] {
+        const QString id = QString::fromStdString(sa::win::license::machineId());
+        QGuiApplication::clipboard()->setText(L(lang_, "Olá! Quero ativar o Upgrade Aim. O ID da minha máquina é ", "Hi! I want to activate Upgrade Aim. My machine ID is ") + id + ".");
+        copyId_->setText(L(lang_, "Copiado! Cole na conversa com o vendedor.", "Copied! Paste it in your chat with the seller."));
+        QTimer::singleShot(4000, this, [this] { copyId_->setText(L(lang_, "Copiar pedido de ativação", "Copy activation request")); });
     });
     connect(activate_, &QPushButton::clicked, this, &Launcher::activate);
     connect(code_, &QLineEdit::returnPressed, this, &Launcher::activate);
@@ -211,7 +216,7 @@ void Launcher::retranslate() {
     activationTitle_->setText(L(lang_, "ATIVAÇÃO", "ACTIVATION"));
     machineLabel_->setText(L(lang_, "ID desta máquina:  ", "This machine ID:  ") + "<b>" +
                            QString::fromStdString(sa::win::license::machineId()) + "</b>");
-    copyId_->setText(L(lang_, "Copiar", "Copy"));
+    copyId_->setText(L(lang_, "Copiar pedido de ativação", "Copy activation request"));
     code_->setPlaceholderText(L(lang_, "Cole aqui o seu código de ativação (UA1-…)", "Paste your activation code here (UA1-…)"));
     activate_->setText(L(lang_, "Ativar", "Activate"));
     // Explain why the app is locked (expired test code, clock set back, ...).
@@ -226,8 +231,8 @@ void Launcher::retranslate() {
                                              L(lang_, ").", " left).")
                                        : L(lang_, "Licença ativa.", "License active.");
     else
-        licenseText = L(lang_, "Envie o ID desta máquina para quem te vendeu o Upgrade Aim e cole aqui o código que você receber.",
-                        "Send this machine ID to whoever sold you Upgrade Aim and paste the code you receive here.");
+        licenseText = L(lang_, "Clique em \"Copiar pedido de ativação\", cole a mensagem na conversa com quem te vendeu o Upgrade Aim e cole aqui o código que você receber.",
+                        "Click \"Copy activation request\", paste the message in your chat with whoever sold you Upgrade Aim and paste the code you receive here.");
     note_->setText(licenseText + "  " +
                    L(lang_, "Começa em pré-visualização segura: nada é enviado ao jogo até você ativar a saída virtual em Configurações.",
                      "Starts in safe preview: nothing is sent to the game until you enable virtual output in Settings."));
