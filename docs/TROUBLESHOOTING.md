@@ -53,6 +53,12 @@ Logs: `%APPDATA%\UpgradeAim\logs\app.jsonl` (app) e `cli.jsonl` (CLI), em JSON L
 **"O controle virtual ficou no mesmo slot XInput da fonte de entrada".**
 - Reconecte o controle físico primeiro e só depois ative a saída virtual, para o controle físico ficar com o slot menor.
 
+**Com o controle virtual ligado, o jogo não responde a nada (nem nos menus).**
+- O HidHide está escondendo também o controle virtual. Isso aconteceu em 28/10/2026 por entradas antigas do Tarantula na lista do HidHide (`HID\VID_3537&PID_103D&IG_01…` e `IG_02…`, que não correspondiam a nenhum dispositivo conectado). Com elas, o controle virtual (`VID_045E PID_028E`, também `IG_01`) ficava invisível para o jogo.
+- Correção: no HidHide, deixe escondidas só as interfaces atuais do Tarantula: `HID\VID_3537&PID_103D&IG_00…`, `MI_01&Col01`, `MI_01&Col04` e a interface XInput `USB\VID_3537&PID_103D&MI_00…`. Pela linha de comando: `HidHideCLI.exe --dev-list` mostra a lista e `--dev-unhide "<caminho>"` remove uma entrada.
+- Para conferir: `upgradeaim-cli devices` roda fora da lista de permitidos e vê os controles como o jogo vê. O certo é aparecer só o slot XInput 1 (o controle virtual).
+- Se você trocar o controle de porta USB, os caminhos mudam: esconda o Tarantula de novo no HidHide.
+
 **O jogo responde em dobro / de forma errática.**
 - Entrada dupla: o jogo lê os dois controles. Esconda o controle físico com o HidHide (com o Upgrade Aim na lista de permitidos), ou configure o Steam Input adequadamente ([COMPATIBILITY.md](COMPATIBILITY.md)).
 
