@@ -1,0 +1,21 @@
+{
+  "name": "Vendor Model",
+  "vendor_id": "XXXX",
+  "modes": [
+    {
+      "product_id": "YYYY",
+      "mode": "e.g. DirectInput / Android",
+      "connection": "USB / 2.4 GHz / Bluetooth",
+      "verification": "What you actually observed (date, OS build, tool output). Leave empty if not observed."
+    }
+  ],
+  "notes": ["Facts you measured."],
+  "unverified": ["Claims you could not measure."],
+  "hid_mapping": {
+    "preset": "generic",
+    "lx": "X", "ly": "-Y", "rx": "Z", "ry": "-Rz", "lt": "Rx", "rt": "Ry",
+    "buttons": { "1": "X", "2": "A", "3": "B", "4": "Y", "5": "LB", "6": "RB", "9": "Back", "10": "Start", "11": "LS", "12": "RS" },
+    "hat_to_dpad": true,
+    "verified": false
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "GameSir Tarantula 8K",
+  "vendor_id": "3537",
+  "modes": [
+    {
+      "product_id": "103D",
+      "mode": "XInput (Xbox 360 compatible)",
+      "connection": "USB (cable or 2.4 GHz receiver: both enumerate as USB, so the link type was not determined)",
+      "verification": "Observed 2026-10-27 on Windows 11 Pro 26200 with the StickyAim CLI: enumerates as 'Xbox 360 Controller for Windows' (xusb22, XInput slot 0), HID interfaces IG_00 (gamepad, XInput HID view) and MI_01 (consumer control + vendor page 0xFFF0). Untouched sticks produced 7576 state changes/s via XInput and 7576 HID reports/s via Raw Input (mean interval 132 us, p50 124.5 us) over 5 s."
+    }
+  ],
+  "notes": [
+    "At rest the sticks jitter by about +/-20 raw counts (sd ~0.0002 normalized) on every report, so XInput's packet number advances continuously even when the controller is untouched. This is why the measured state-change rate is close to the report rate at rest.",
+    "Measured rest offsets on the test unit: right stick |v| ~0.015, left stick ~0.031. Re-measure your own unit with Stick Lab > Rest calibration.",
+    "MI_01 exposes a vendor-defined collection (usage page 0xFFF0). StickyAim never writes to it; it is presumably the channel used by GameSir's own configuration software."
+  ],
+  "unverified": [
+    "Product IDs for other modes (Switch, DirectInput/Android, Bluetooth, 2.4 GHz dongle) are not in this file because they were not observed.",
+    "Whether the 8 kHz rate is available on the 2.4 GHz receiver or only wired.",
+    "Firmware-side deadzone/curve settings and how they interact with StickyAim processing."
+  ],
+  "hid_mapping": {
+    "preset": "xinput_hid",
+    "verified": false
+  }
+}

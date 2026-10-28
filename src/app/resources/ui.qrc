@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/ui">
+        <file>app-mark.svg</file>
+        <file>chevron-down.svg</file>
+        <file>chevron-up.svg</file>
+        <file>nav-compat.svg</file>
+        <file>nav-dashboard.svg</file>
+        <file>nav-latency.svg</file>
+        <file>nav-profiles.svg</file>
+        <file>nav-settings.svg</file>
+        <file>nav-stick.svg</file>
+        <file>nav-testing.svg</file>
+        <file>switch-off-disabled.svg</file>
+        <file>switch-off.svg</file>
+        <file>switch-on-disabled.svg</file>
+        <file>switch-on.svg</file>
+    </qresource>
+</RCC>
