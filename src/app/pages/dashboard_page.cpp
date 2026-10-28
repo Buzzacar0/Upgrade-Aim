@@ -1,3 +1,4 @@
+#include <QCheckBox>
 #include <QComboBox>
 #include <QFileInfo>
 #include <QGridLayout>
@@ -43,14 +44,21 @@ DashboardPage::DashboardPage(AppController* app, QWidget* parent) : QWidget(pare
     device_ = ui::subheading({});
     titles->addWidget(device_);
     top->addLayout(titles, 1);
-    bypass_ = new QPushButton(T("Pass-through"));
-    bypass_->setCheckable(true);
-    bypass_->setToolTip(T("Send the raw controller state unchanged (Ctrl+Alt+P, or hold Back+Start)."));
+    // Active / Bypass switch, as in Upgrade Sound: on = the profile processes
+    // the sticks, off = the controller state goes through unchanged.
+    active_ = new QCheckBox;
+    active_->setObjectName("bigSwitch");
+    active_->setCursor(Qt::PointingHandCursor);
+    active_->setToolTip(T("Send the raw controller state unchanged (Ctrl+Alt+P, or hold Back+Start)."));
+    activeLabel_ = new QLabel;
+    activeLabel_->setStyleSheet("font-size: 14px; font-weight: 600;");
     startStop_ = new QPushButton;
     startStop_->setProperty("primary", true);
     startStop_->setMinimumWidth(130);
-    top->addWidget(bypass_, 0, Qt::AlignVCenter);
-    top->addSpacing(8);
+    top->addWidget(activeLabel_, 0, Qt::AlignVCenter);
+    top->addSpacing(10);
+    top->addWidget(active_, 0, Qt::AlignVCenter);
+    top->addSpacing(18);
     top->addWidget(startStop_, 0, Qt::AlignVCenter);
     root->addLayout(top);
 
@@ -167,7 +175,7 @@ DashboardPage::DashboardPage(AppController* app, QWidget* parent) : QWidget(pare
         }
         refresh();
     });
-    connect(bypass_, &QPushButton::toggled, this, [this](bool on) { app_->setBypass(on); });
+    connect(active_, &QCheckBox::toggled, this, [this](bool on) { app_->setBypass(!on); });
     connect(sourceCombo_, &QComboBox::activated, this, [this](int idx) {
         const QVariantList v = sourceCombo_->itemData(idx).toList();
         AppController::SourceSel sel;
@@ -292,10 +300,18 @@ void DashboardPage::refresh() {
 
     const QString start = running ? T("Stop engine") : T("Start engine");
     if (startStop_->text() != start) startStop_->setText(start);
-    bypass_->blockSignals(true);
-    bypass_->setChecked(c.bypass);
-    bypass_->blockSignals(false);
-    bypass_->setEnabled(running);
+    active_->blockSignals(true);
+    active_->setChecked(!c.bypass);
+    active_->blockSignals(false);
+    active_->setEnabled(running);
+    const QString activeText = !running ? T("Engine stopped.")
+                               : c.bypass ? T("Bypass · original controller")
+                                          : T("Active · processed by Upgrade Aim");
+    if (activeLabel_->text() != activeText) {
+        activeLabel_->setText(activeText);
+        activeLabel_->setStyleSheet(QString("font-size: 14px; font-weight: 600; color: %1;")
+                                        .arg(!running ? "#8E8E93" : c.bypass ? "#FF9F0A" : "#30D158"));
+    }
 
     const QString matched = app_->matchedDeviceName();
     setTextIfChanged(device_, (matched.isEmpty() ? T("No known controller detected") : matched) + "  ·  " + app_->sourceDescription());

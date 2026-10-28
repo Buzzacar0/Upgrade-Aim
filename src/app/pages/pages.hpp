@@ -41,7 +41,9 @@ private:
     AppController* app_;
     QLabel *badge_, *device_, *source_, *engine_, *profile_, *context_, *rate_, *counters_, *drift_;
     QComboBox *sourceCombo_, *profileCombo_;
-    QPushButton *startStop_, *bypass_;
+    QPushButton* startStop_;
+    QCheckBox* active_;     // Active (profile on) / Bypass switch
+    QLabel* activeLabel_;
     StickView *left_, *right_;
     // Read rate and response time tiles: 0 = rate (Hz), 1 = without app, 2 = with app, 3 = smoothing.
     QLabel* tileValue_[4];

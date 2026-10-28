@@ -1,0 +1,207 @@
+{
+    "schema_version":  1,
+    "name":  "Upgrade",
+    "description":  "Máxima precisão, ajustado com as medidas do seu Tarantula 8K: deadzone de 0,02 no analógico direito (o desvio máximo medido em repouso foi 0,016) e 0,05 no esquerdo (em repouso ele chegou a 0,045), para as microcorreções chegarem ao jogo. Curvas mais finas perto do centro (hip 1,4; ADS 1,5) com faixa de ajuste fino, e uma faixa rápida na borda para não perder velocidade de giro. Vertical a 0,95 para segurar melhor a altura da mira. Sem suavização: zero de atraso adicionado. No jogo, use deadzone mínima baixa (2 a 3) e curva Linear para não somar duas curvas.",
+    "target_device":  "GameSir Tarantula 8K",
+    "hip":  {
+                "deadzone":  {
+                                 "type":  "radial",
+                                 "inner":  0.02,
+                                 "outer":  0.97
+                             },
+                "curve_mode":  "radial",
+                "radial":  {
+                               "curve":  {
+                                             "type":  "power",
+                                             "exponent":  1.4,
+                                             "k":  0.0,
+                                             "points":  [
+
+                                                        ]
+                                         },
+                               "fine":  {
+                                            "enabled":  true,
+                                            "start":  0,
+                                            "end":  0.2,
+                                            "gain":  0.75,
+                                            "blend":  0.06
+                                        },
+                               "fast":  {
+                                            "enabled":  true,
+                                            "start":  0.85,
+                                            "end":  1,
+                                            "gain":  1.4,
+                                            "blend":  0.06
+                                        }
+                           },
+                "x":  {
+                          "curve":  {
+                                        "type":  "linear",
+                                        "exponent":  1.0,
+                                        "k":  0.0,
+                                        "points":  [
+
+                                                   ]
+                                    },
+                          "fine":  {
+                                       "enabled":  false,
+                                       "start":  0.0,
+                                       "end":  0.25,
+                                       "gain":  0.6,
+                                       "blend":  0.08
+                                   },
+                          "fast":  {
+                                       "enabled":  false,
+                                       "start":  0.8,
+                                       "end":  1.0,
+                                       "gain":  1.6,
+                                       "blend":  0.08
+                                   }
+                      },
+                "y":  {
+                          "curve":  {
+                                        "type":  "linear",
+                                        "exponent":  1.0,
+                                        "k":  0.0,
+                                        "points":  [
+
+                                                   ]
+                                    },
+                          "fine":  {
+                                       "enabled":  false,
+                                       "start":  0.0,
+                                       "end":  0.25,
+                                       "gain":  0.6,
+                                       "blend":  0.08
+                                   },
+                          "fast":  {
+                                       "enabled":  false,
+                                       "start":  0.8,
+                                       "end":  1.0,
+                                       "gain":  1.6,
+                                       "blend":  0.08
+                                   }
+                      },
+                "sens_x":  1,
+                "sens_y":  0.95,
+                "smoothing":  {
+                                  "type":  "none",
+                                  "ema_tau_ms":  4.0,
+                                  "min_cutoff_hz":  3.0,
+                                  "beta":  0.05,
+                                  "d_cutoff_hz":  10.0,
+                                  "flick_bypass_speed":  0.0
+                              },
+                "circular_saturation":  true,
+                "anti_deadzone":  0
+            },
+    "ads":  {
+                "deadzone":  {
+                                 "type":  "radial",
+                                 "inner":  0.02,
+                                 "outer":  0.97
+                             },
+                "curve_mode":  "radial",
+                "radial":  {
+                               "curve":  {
+                                             "type":  "power",
+                                             "exponent":  1.5,
+                                             "k":  0.0,
+                                             "points":  [
+
+                                                        ]
+                                         },
+                               "fine":  {
+                                            "enabled":  true,
+                                            "start":  0,
+                                            "end":  0.2,
+                                            "gain":  0.8,
+                                            "blend":  0.06
+                                        },
+                               "fast":  {
+                                            "enabled":  true,
+                                            "start":  0.85,
+                                            "end":  1,
+                                            "gain":  1.3,
+                                            "blend":  0.06
+                                        }
+                           },
+                "x":  {
+                          "curve":  {
+                                        "type":  "linear",
+                                        "exponent":  1.0,
+                                        "k":  0.0,
+                                        "points":  [
+
+                                                   ]
+                                    },
+                          "fine":  {
+                                       "enabled":  false,
+                                       "start":  0.0,
+                                       "end":  0.25,
+                                       "gain":  0.6,
+                                       "blend":  0.08
+                                   },
+                          "fast":  {
+                                       "enabled":  false,
+                                       "start":  0.8,
+                                       "end":  1.0,
+                                       "gain":  1.6,
+                                       "blend":  0.08
+                                   }
+                      },
+                "y":  {
+                          "curve":  {
+                                        "type":  "linear",
+                                        "exponent":  1.0,
+                                        "k":  0.0,
+                                        "points":  [
+
+                                                   ]
+                                    },
+                          "fine":  {
+                                       "enabled":  false,
+                                       "start":  0.0,
+                                       "end":  0.25,
+                                       "gain":  0.6,
+                                       "blend":  0.08
+                                   },
+                          "fast":  {
+                                       "enabled":  false,
+                                       "start":  0.8,
+                                       "end":  1.0,
+                                       "gain":  1.6,
+                                       "blend":  0.08
+                                   }
+                      },
+                "sens_x":  1,
+                "sens_y":  0.95,
+                "smoothing":  {
+                                  "type":  "none",
+                                  "ema_tau_ms":  4.0,
+                                  "min_cutoff_hz":  3.0,
+                                  "beta":  0.05,
+                                  "d_cutoff_hz":  10.0,
+                                  "flick_bypass_speed":  0.0
+                              },
+                "circular_saturation":  true,
+                "anti_deadzone":  0
+            },
+    "ads_from_left_trigger":  true,
+    "ads_enter":  0.12,
+    "ads_exit":  0.06,
+    "context_transition_ms":  0,
+    "move_stick":  {
+                       "type":  "radial",
+                       "inner":  0.05,
+                       "outer":  0.97
+                   },
+    "left_trigger":  {
+                         "inner":  0.0,
+                         "outer":  1.0
+                     },
+    "right_trigger":  {
+                          "inner":  0.0,
+                          "outer":  1.0
+                      }
+}

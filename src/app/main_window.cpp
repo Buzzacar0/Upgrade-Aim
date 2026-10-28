@@ -162,7 +162,7 @@ void MainWindow::refreshModePill() {
     QString name, text;
     if (c.bypass && running) {
         name = "badgeBypass";
-        text = T("Pass-through");
+        text = T("Bypass");
     } else if (injecting) {
         name = "badgeInject";
         text = T("Virtual controller active");

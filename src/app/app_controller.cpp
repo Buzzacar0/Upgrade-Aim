@@ -307,6 +307,7 @@ bool AppController::startEngine(QString* error) {
         sink = std::make_unique<sa::PreviewSink>();
     }
     engine_ = std::make_unique<sa::Engine>(makeSource(), std::move(sink), engineCfg_);
+    engine_->setBypass(settings_.value("bypass", false));
     std::vector<std::string> errs;
     if (auto cp = sa::CompiledProfile::compile(profile_, calibration_, &errs)) {
         measureSmoothingLag(*cp);
@@ -383,6 +384,10 @@ bool AppController::setOutput(OutputKind kind, QString* error) {
 
 void AppController::setBypass(bool on) {
     if (engine_) engine_->setBypass(on);
+    // Remembered like Upgrade Sound's Active/Bypass switch. The controller's
+    // panic combo toggles the engine directly and is not persisted.
+    settings_["bypass"] = on;
+    saveSettings();
     Q_EMIT engineStateChanged();
 }
 

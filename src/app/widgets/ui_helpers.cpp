@@ -90,6 +90,12 @@ QCheckBox::indicator:checked { image: url(:/ui/switch-on.svg); }
 QCheckBox::indicator:unchecked:disabled { image: url(:/ui/switch-off-disabled.svg); }
 QCheckBox::indicator:checked:disabled { image: url(:/ui/switch-on-disabled.svg); }
 QCheckBox:disabled { color: #5A5A5F; }
+/* Large Active (green) / Bypass (orange) switch, as in Upgrade Sound */
+QCheckBox#bigSwitch { spacing: 0; }
+QCheckBox#bigSwitch::indicator { width: 56px; height: 32px; }
+QCheckBox#bigSwitch::indicator:checked { image: url(:/ui/switch-lg-on.svg); }
+QCheckBox#bigSwitch::indicator:unchecked { image: url(:/ui/switch-lg-off.svg); }
+QCheckBox#bigSwitch::indicator:disabled { image: url(:/ui/switch-lg-disabled.svg); }
 
 /* Segmented control look for tabs */
 QTabWidget::pane { border: none; top: 10px; }

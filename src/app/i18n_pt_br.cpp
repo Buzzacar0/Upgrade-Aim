@@ -209,6 +209,8 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"Active profile", "Perfil ativo"},
     {"Ctrl+Alt+1…9 switches to the n-th profile in this list instantly.",
      "Ctrl+Alt+1…9 troca na hora para o perfil de número correspondente nesta lista."},
+    {"Bypass · original controller", "Bypass · controle original"},
+    {"Active · processed by Upgrade Aim", "Ativo · passando pelo Upgrade Aim"},
     {"Safe preview", "Pré-visualização segura"},
     {"Virtual controller active", "Controle virtual ativo"},
     {"Smoothing", "Suavização"},
