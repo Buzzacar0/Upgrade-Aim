@@ -18,7 +18,8 @@ Legenda: **Verificado** = observado em hardware real durante o desenvolvimento, 
 | Tipo de conexão (cabo x receptor 2.4 GHz) | Não verificado | os dois aparecem como USB, então a conexão usada nos testes não foi identificada |
 | Outros modos (Switch, DirectInput/Android, Bluetooth) | Não verificado | os Product IDs deles não foram observados, então não estão em `devices/` |
 | Fonte Raw Input (mapeamento HID) para este controle | Não verificado | a leitura usa o mapeamento genérico XInput-HID (`hid_mapping.verified = false`) |
-| Repasse de vibração pelo controle virtual | Não verificado | precisa do ViGEmBus |
+| Saída para controle virtual (ViGEmBus 1.22.0) | **Verificado** | 28/10/2026: o controle virtual apareceu no slot XInput 1 (o Tarantula ficou no 0), recebeu ≈ 7.400 estados/s e foi removido ao parar. O índice informado pelo ViGEm logo após criar o controle era 0, errado; o app agora descobre o slot real pela diferença antes/depois. |
+| Repasse de vibração pelo controle virtual | Não verificado | precisa de um jogo enviando vibração |
 | Interação com as configurações do firmware/app da GameSir | Não verificado | deadzones ou curvas do firmware se somam ao processamento do Upgrade Aim |
 
 ### Outros controles

@@ -57,6 +57,10 @@ bool ViGEmX360Sink::open(std::string& error) {
         vigem_free(client);
         return false;
     }
+    // Which XInput slots are taken before the virtual pad exists, so the slot
+    // it really gets can be found by difference (see below).
+    const auto before = XInputSource::querySlots();
+
     auto target = vigem_target_x360_alloc();
     r = vigem_target_add(client, target);
     if (!VIGEM_SUCCESS(r)) {
@@ -69,22 +73,34 @@ bool ViGEmX360Sink::open(std::string& error) {
     client_ = client;
     target_ = target;
 
-    ULONG idx = 0;
-    // The user index is assigned asynchronously by the XInput stack; retry briefly.
-    for (int i = 0; i < 50; ++i) {
-        if (VIGEM_SUCCESS(vigem_target_x360_get_user_index(client, target, &idx))) {
-            userIndex_.store(static_cast<int>(idx));
-            break;
-        }
-        Sleep(10);
+    // The slot ViGEm reports right after attaching is not reliable: on the
+    // development machine it returned 0 while the physical pad held slot 0
+    // and the virtual pad appeared in slot 1. The real slot is the one that
+    // becomes connected after attaching, so wait for it (up to 1.5 s).
+    int newSlot = -1;
+    for (int i = 0; i < 75 && newSlot < 0; ++i) {
+        Sleep(20);
+        const auto after = XInputSource::querySlots();
+        for (int s = 0; s < 4; ++s)
+            if (after[static_cast<size_t>(s)].connected && !before[static_cast<size_t>(s)].connected) newSlot = s;
     }
-    if (userIndex_.load() >= 0 && userIndex_.load() == physicalSlot_) {
-        error = "virtual controller took the same XInput slot as the input source; refusing to create a feedback loop";
+    ULONG reported = 0;
+    const bool haveReported = VIGEM_SUCCESS(vigem_target_x360_get_user_index(client, target, &reported));
+    userIndex_.store(newSlot >= 0 ? newSlot : (haveReported ? static_cast<int>(reported) : -1));
+    logInfo("vigem", "virtual X360 attached: new XInput slot " + std::to_string(newSlot) + ", ViGEm-reported index " +
+                         (haveReported ? std::to_string(reported) : std::string("n/a")));
+
+    // Feedback loop: the input source would be reading the virtual pad. That
+    // only happens if the physical pad was not in its slot before attaching.
+    const bool physicalWasThere = physicalSlot_ >= 0 && before[static_cast<size_t>(physicalSlot_)].connected;
+    if (physicalSlot_ >= 0 && (!physicalWasThere || newSlot == physicalSlot_)) {
+        error = "the physical controller is not in XInput slot " + std::to_string(physicalSlot_) +
+                ", so the app would read its own virtual controller. Reconnect the controller, select it again on the "
+                "Dashboard, then enable virtual output.";
         close();
         return false;
     }
     vigem_target_x360_register_notification(client, target, &rumbleCallback, this);
-    logInfo("vigem", "virtual X360 attached at XInput slot " + std::to_string(userIndex_.load()));
     return true;
 }
 

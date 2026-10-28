@@ -47,7 +47,7 @@ upgradeaim-cli run --profile profiles/tarantula8k_precisao.json --seconds 6 --mo
 
 Mesmo PC, sessão anterior, intervalo padrão de 250 µs: ≈ 2.300 estados novos/s, e a maior parte das mudanças de estado do controle não era vista. Por isso o padrão agora é 125 µs. O modo spin vê todo pacote que o driver expõe, ao custo de ocupar um núcleo.
 
-O custo de envio da saída ViGEm (um `DeviceIoControl` por amostra) **não foi medido** (sem ViGEmBus instalado).
+Saída ViGEm (controle virtual), medida em 28/10/2026 com o ViGEmBus 1.22.0 e o HidHide 1.5.230 instalados, perfil upgrade, 4 s: ≈ 7.400 estados/s enviados ao controle virtual; envio p50 1,9 µs, p99 4,5–6,0 µs; leitura → envio concluído p99 4,5–6,5 µs.
 
 ## 4. Atraso adicionado pelo app (Painel, ao vivo)
 

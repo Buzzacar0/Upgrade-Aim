@@ -82,7 +82,7 @@ Esses números cobrem só o caminho do software no PC. A latência de USB, drive
 
 ## Não verificado
 
-- Saída para controle virtual: está compilada, mas **nunca rodou com o ViGEmBus** (o driver não está instalado no PC de desenvolvimento).
+- Saída para controle virtual com um jogo: o controle virtual foi criado e recebeu a entrada processada (28/10/2026), mas ainda não foi testado dentro de um jogo.
 - Qualquer jogo, incluindo o MW4, e o comportamento de qualquer launcher (Steam, Battle.net, app Xbox). O checklist de compatibilidade vem vazio.
 - Os outros modos do Tarantula 8K (2.4 GHz, Bluetooth, Switch, DirectInput) e o mapeamento HID dele pela fonte Raw Input.
 
