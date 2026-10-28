@@ -170,8 +170,8 @@ DashboardPage::DashboardPage(AppController* app, QWidget* parent) : QWidget(pare
     counters_->setVisible(false);
     auto* details = new QPushButton(T("Technical details"));
     details->setCheckable(true);
-    details->setStyleSheet("QPushButton { background: transparent; color: #0A84FF; padding: 2px 0; text-align: left; }"
-                           "QPushButton:checked { background: transparent; color: #409CFF; }");
+    details->setStyleSheet("QPushButton { background: transparent; color: #B44DFF; padding: 2px 0; text-align: left; }"
+                           "QPushButton:checked { background: transparent; color: #C77DFF; }");
     details->setCursor(Qt::PointingHandCursor);
     engL->addWidget(engine_);
     engL->addWidget(rate_);

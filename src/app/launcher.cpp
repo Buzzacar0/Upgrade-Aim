@@ -14,6 +14,7 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QPushButton>
+#include <QRandomGenerator>
 #include <QSettings>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -43,7 +44,7 @@ i18n::Lang Launcher::savedLanguage() {
 Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     setWindowTitle("Upgrade Aim");
     setFixedSize(960, 600);
-    setWindowIcon(QIcon(":/ui/app-mark.svg"));
+    setWindowIcon(QIcon(":/ui/up-icon.png"));
     ui::applyWindowChrome(this);
 
     auto* root = new QVBoxLayout(this);
@@ -51,7 +52,7 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     root->setSpacing(0);
 
     auto* mark = new QLabel;
-    mark->setPixmap(QIcon(":/ui/app-mark.svg").pixmap(52, 52));
+    mark->setPixmap(QIcon(":/ui/up-icon.png").pixmap(64, 64));
     root->addWidget(mark);
     root->addSpacing(22);
     auto* title = new QLabel("Upgrade Aim");
@@ -108,8 +109,8 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     machineLabel_->setStyleSheet("font-size:14px; color:#F5F5F7; background:transparent;");
     copyId_ = new QPushButton;
     copyId_->setCursor(Qt::PointingHandCursor);
-    copyId_->setStyleSheet("QPushButton { font-size:13px; padding:4px 0; border:none; background:transparent; color:#0A84FF; }"
-                           "QPushButton:hover { color:#409CFF; }");
+    copyId_->setStyleSheet("QPushButton { font-size:13px; padding:4px 0; border:none; background:transparent; color:#B44DFF; }"
+                           "QPushButton:hover { color:#C77DFF; }");
     idRow->addWidget(machineLabel_);
     idRow->addWidget(copyId_);
     idRow->addStretch();
@@ -120,11 +121,11 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     code_->setMinimumWidth(520);
     code_->setStyleSheet("QLineEdit { background: rgba(255,255,255,0.08); color:#F5F5F7; border: 1px solid transparent;"
                          " border-radius: 8px; padding: 8px 10px; font-size: 13px; }"
-                         "QLineEdit:focus { border: 1px solid #0A84FF; }");
+                         "QLineEdit:focus { border: 1px solid #B44DFF; }");
     activate_ = new QPushButton;
     activate_->setCursor(Qt::PointingHandCursor);
     activate_->setStyleSheet("QPushButton { font-size:14px; font-weight:600; padding:8px 26px; border:none; border-radius:8px;"
-                             " background:#0A84FF; color:#FFFFFF; } QPushButton:hover { background:#2E96FF; }");
+                             " background:#B44DFF; color:#FFFFFF; } QPushButton:hover { background:#C36BFF; }");
     codeRow->addWidget(code_, 1);
     codeRow->addWidget(activate_);
     act->addLayout(codeRow);
@@ -141,14 +142,9 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     start_->setCursor(Qt::PointingHandCursor);
     start_->setStyleSheet(
         "QPushButton { font-size:15px; font-weight:600; padding:11px 38px; border:none; border-radius:10px;"
-        " background:#0A84FF; color:#FFFFFF; }"
-        "QPushButton:hover { background:#2E96FF; } QPushButton:pressed { background:#0070E0; }");
-    image_ = new QPushButton;
-    image_->setCursor(Qt::PointingHandCursor);
-    image_->setStyleSheet("QPushButton { font-size:13px; padding:6px 0; border:none; background:transparent; color:#0A84FF; }"
-                          "QPushButton:hover { color:#409CFF; }");
+        " background:#B44DFF; color:#FFFFFF; }"
+        "QPushButton:hover { background:#C36BFF; } QPushButton:pressed { background:#9A2FE6; }");
     bottom->addWidget(start_);
-    bottom->addWidget(image_);
     bottom->addStretch();
     root->addLayout(bottom);
     root->addSpacing(18);
@@ -159,19 +155,17 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
     root->addWidget(note_);
     connect(pt_, &QPushButton::clicked, this, [this] { setLanguage(i18n::Lang::PtBr); });
     connect(en_, &QPushButton::clicked, this, [this] { setLanguage(i18n::Lang::En); });
-    connect(image_, &QPushButton::clicked, this, &Launcher::chooseBackground);
     connect(start_, &QPushButton::clicked, this, [this] {
         if (!license_.valid) return;
         QSettings ini(iniPath(), QSettings::IniFormat);
         ini.setValue("language", i18n::code(lang_));
         accept();
     });
-    // Ready-made message the customer pastes to the seller (WhatsApp, Discord...).
+    // Copies only the machine ID.
     connect(copyId_, &QPushButton::clicked, this, [this] {
-        const QString id = QString::fromStdString(sa::win::license::machineId());
-        QGuiApplication::clipboard()->setText(L(lang_, "Olá! Quero ativar o Upgrade Aim. O ID da minha máquina é ", "Hi! I want to activate Upgrade Aim. My machine ID is ") + id + ".");
-        copyId_->setText(L(lang_, "Copiado! Cole na conversa com o vendedor.", "Copied! Paste it in your chat with the seller."));
-        QTimer::singleShot(4000, this, [this] { copyId_->setText(L(lang_, "Copiar pedido de ativação", "Copy activation request")); });
+        QGuiApplication::clipboard()->setText(QString::fromStdString(sa::win::license::machineId()));
+        copyId_->setText(L(lang_, "Copiado!", "Copied!"));
+        QTimer::singleShot(3000, this, [this] { copyId_->setText(L(lang_, "Copiar ID", "Copy ID")); });
     });
     connect(activate_, &QPushButton::clicked, this, &Launcher::activate);
     connect(code_, &QLineEdit::returnPressed, this, &Launcher::activate);
@@ -209,14 +203,13 @@ void Launcher::retranslate() {
                          "Controller precision lab · GameSir Tarantula 8K"));
     languageLabel_->setText(L(lang_, "Idioma", "Language"));
     start_->setText(L(lang_, "Iniciar", "Start"));
-    image_->setText(L(lang_, "Trocar imagem de fundo…", "Change background image…"));
     const bool active = license_.valid;
     activation_->setVisible(!active);
     start_->setVisible(active);
     activationTitle_->setText(L(lang_, "ATIVAÇÃO", "ACTIVATION"));
     machineLabel_->setText(L(lang_, "ID desta máquina:  ", "This machine ID:  ") + "<b>" +
                            QString::fromStdString(sa::win::license::machineId()) + "</b>");
-    copyId_->setText(L(lang_, "Copiar pedido de ativação", "Copy activation request"));
+    copyId_->setText(L(lang_, "Copiar ID", "Copy ID"));
     code_->setPlaceholderText(L(lang_, "Cole aqui o seu código de ativação (UA1-…)", "Paste your activation code here (UA1-…)"));
     activate_->setText(L(lang_, "Ativar", "Activate"));
     // Explain why the app is locked (expired test code, clock set back, ...).
@@ -231,36 +224,18 @@ void Launcher::retranslate() {
                                              L(lang_, ").", " left).")
                                        : L(lang_, "Licença ativa.", "License active.");
     else
-        licenseText = L(lang_, "Clique em \"Copiar pedido de ativação\", cole a mensagem na conversa com quem te vendeu o Upgrade Aim e cole aqui o código que você receber.",
-                        "Click \"Copy activation request\", paste the message in your chat with whoever sold you Upgrade Aim and paste the code you receive here.");
+        licenseText = L(lang_, "Clique em \"Copiar ID\", envie o ID e cole aqui o código que você receber.",
+                        "Click \"Copy ID\", send the ID and paste the code you receive here.");
     note_->setText(licenseText + "  " +
                    L(lang_, "Começa em pré-visualização segura: nada é enviado ao jogo até você ativar a saída virtual em Configurações.",
                      "Starts in safe preview: nothing is sent to the game until you enable virtual output in Settings."));
 }
 
+// One of the two bundled operator pictures, picked at random on each start.
 void Launcher::loadBackground() {
-    background_ = {};
-    QSettings ini(iniPath(), QSettings::IniFormat);
-    QStringList candidates;
-    const QString saved = ini.value("background").toString();
-    if (!saved.isEmpty()) candidates << saved;
-    const QString dataDir = QString::fromStdString(sa::win::userDataDir());
-    for (const char* ext : {"jpg", "jpeg", "png", "webp"}) candidates << dataDir + "/launcher_background." + ext;
-    for (const QString& c : candidates) {
-        if (QFileInfo::exists(c) && background_.load(c)) break;
-    }
+    const QString pictures[] = {":/ui/operators-1.jpg", ":/ui/operators-2.jpg"};
+    background_.load(pictures[QRandomGenerator::global()->bounded(2)]);
     update();
-}
-
-void Launcher::chooseBackground() {
-    const QString path = QFileDialog::getOpenFileName(this, L(lang_, "Escolher imagem de fundo", "Choose background image"), {},
-                                                      L(lang_, "Imagens (*.jpg *.jpeg *.png *.webp *.bmp)",
-                                                        "Images (*.jpg *.jpeg *.png *.webp *.bmp)"));
-    if (path.isEmpty()) return;
-    QSettings ini(iniPath(), QSettings::IniFormat);
-    ini.setValue("background", path);
-    ini.sync();
-    loadBackground();
 }
 
 void Launcher::paintEvent(QPaintEvent*) {
@@ -285,7 +260,7 @@ void Launcher::paintEvent(QPaintEvent*) {
             g.setColorAt(1.0, col);
             p.fillRect(rect(), g);
         };
-        glow(QPointF(width() * 0.78, height() * 0.30), width() * 0.55, QColor(10, 132, 255, 70));
+        glow(QPointF(width() * 0.78, height() * 0.30), width() * 0.55, QColor(180, 77, 255, 70));
         glow(QPointF(width() * 0.95, height() * 0.95), width() * 0.40, QColor(255, 159, 10, 34));
         const QPointF c(width() * 0.78, height() * 0.46);
         p.setBrush(Qt::NoBrush);

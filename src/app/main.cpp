@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     QApplication qapp(argc, argv);
     QApplication::setApplicationName("Upgrade Aim");
     QApplication::setOrganizationName("Upgrade Aim");
-    QApplication::setApplicationVersion("0.1.0");
+    QApplication::setApplicationVersion("0.1.1");
     qapp.setStyle("Fusion");
     qapp.setPalette(ui::palette());
     qapp.setFont(QFont(ui::fontFamily(), 10));
@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     const QStringList args = QApplication::arguments();
     if (const auto i = args.indexOf("--write-icon"); i >= 0 && i + 1 < args.size()) {
         // Build helper: write resources/app.ico (PNG-compressed entries, 16-256 px).
-        const QIcon icon(":/ui/app-mark.svg");
+        const QIcon icon(":/ui/up-icon.png");
         const int sizes[] = {16, 20, 24, 32, 40, 48, 64, 128, 256};
         QList<QByteArray> pngs;
         for (int s : sizes) {

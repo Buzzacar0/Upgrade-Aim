@@ -218,6 +218,8 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"This activation code has expired.", "Este código de ativação expirou."},
     {"Not activated yet.", "Ainda não ativado."},
     {"License", "Licença"},
+    {"Open Upgrade Aim", "Abrir o Upgrade Aim"},
+    {"Quit", "Sair"},
     {"This test code has already expired on this computer.", "Este código de teste já expirou neste computador."},
     {"The date and time of this PC were set back. Correct them to keep using Upgrade Aim.",
      "A data e a hora deste PC foram atrasadas. Corrija para continuar usando o Upgrade Aim."},

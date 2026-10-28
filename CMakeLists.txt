@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(UpgradeAim
-    VERSION 0.1.0
+    VERSION 0.1.1
     DESCRIPTION "Upgrade Aim: laboratorio de entrada de controle para Windows"
     LANGUAGES CXX C)
 

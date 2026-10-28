@@ -11,6 +11,8 @@
 #include <QPushButton>
 #include <QStackedWidget>
 #include <QComboBox>
+#include <QMenu>
+#include <QSystemTrayIcon>
 #include <QScrollArea>
 #include <QIcon>
 #include <QLabel>
@@ -38,7 +40,7 @@ constexpr int kHotkeyProfileBase = 10;  // +1..+9
 
 MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent), app_(app) {
     setWindowTitle("Upgrade Aim");
-    setWindowIcon(QIcon(":/ui/app-mark.svg"));
+    setWindowIcon(QIcon(":/ui/up-icon.png"));
     resize(1380, 900);
     setMinimumSize(1100, 720);
 
@@ -59,7 +61,7 @@ MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent
     brandRow->setContentsMargins(20, 0, 20, 0);
     brandRow->setSpacing(10);
     auto* mark = new QLabel;
-    mark->setPixmap(QIcon(":/ui/app-mark.svg").pixmap(28, 28));
+    mark->setPixmap(QIcon(":/ui/up-icon.png").pixmap(28, 28));
     auto* brandText = new QVBoxLayout;
     brandText->setSpacing(0);
     auto* brand = new QLabel("Upgrade Aim");
@@ -157,6 +159,27 @@ MainWindow::MainWindow(AppController* app, QWidget* parent) : QMainWindow(parent
     pillTimer->start(250);
     connect(app_, &AppController::engineStateChanged, this, &MainWindow::refreshModePill);
     refreshModePill();
+
+    // Icon in the notification area (next to the clock) while the app runs.
+    tray_ = new QSystemTrayIcon(QIcon(":/ui/up-icon.png"), this);
+    tray_->setToolTip("Upgrade Aim");
+    auto* trayMenu = new QMenu(this);
+    trayMenu->addAction(T("Open Upgrade Aim"), this, [this] {
+        showNormal();
+        raise();
+        activateWindow();
+    });
+    trayMenu->addSeparator();
+    trayMenu->addAction(T("Quit"), this, &QWidget::close);
+    tray_->setContextMenu(trayMenu);
+    connect(tray_, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason r) {
+        if (r == QSystemTrayIcon::Trigger || r == QSystemTrayIcon::DoubleClick) {
+            showNormal();
+            raise();
+            activateWindow();
+        }
+    });
+    tray_->show();
 
     license_ = sa::win::license::installedLicense();
     auto* licenseTimer = new QTimer(this);

@@ -8,6 +8,7 @@ class AppController;
 class QLabel;
 class QListWidget;
 class QStackedWidget;
+class QSystemTrayIcon;
 class QTimer;
 
 class MainWindow : public QMainWindow {
@@ -40,6 +41,7 @@ private:
     QTimer* toastTimer_;
     QLabel* modePill_;
     QLabel* licenseInfo_;  // remaining time of a test code, under the mode pill
+    QSystemTrayIcon* tray_;  // icon next to the clock while the app runs
     sa::win::license::Info license_;
     bool expiryWarned_ = false;
 };

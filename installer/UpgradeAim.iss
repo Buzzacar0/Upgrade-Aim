@@ -6,7 +6,7 @@
 ; with their normal windows, and only if the user keeps the task checked.
 
 #define AppName "Upgrade Aim"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.1"
 #define Stage "..\dist\stage"
 #define Redist "..\dist\redist"
 

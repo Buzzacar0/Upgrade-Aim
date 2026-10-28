@@ -3,8 +3,8 @@
 IDI_ICON1 ICON "resources/app.ico"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
+ FILEVERSION 0,1,1,0
+ PRODUCTVERSION 0,1,1,0
  FILEOS VOS_NT_WINDOWS32
  FILETYPE VFT_APP
 BEGIN
@@ -14,9 +14,9 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Upgrade Aim"
             VALUE "FileDescription", "Upgrade Aim"
-            VALUE "FileVersion", "0.1.0"
+            VALUE "FileVersion", "0.1.1"
             VALUE "ProductName", "Upgrade Aim"
-            VALUE "ProductVersion", "0.1.0"
+            VALUE "ProductVersion", "0.1.1"
             VALUE "OriginalFilename", "UpgradeAim.exe"
         END
     END

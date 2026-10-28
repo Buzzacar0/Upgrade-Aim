@@ -27,7 +27,7 @@ struct Colors {
     static QColor muted() { return QColor(0x98, 0x98, 0x9d); }
     static QColor tertiary() { return QColor(0x63, 0x63, 0x66); }
     static QColor raw() { return QColor(0xae, 0xae, 0xb2); }
-    static QColor hip() { return QColor(0x0a, 0x84, 0xff); }   // system blue
+    static QColor hip() { return QColor(0xb4, 0x4d, 0xff); }   // accent purple (Upgrade Store)
     static QColor ads() { return QColor(0xff, 0x9f, 0x0a); }   // system orange
     static QColor good() { return QColor(0x30, 0xd1, 0x58); }  // system green
     static QColor warn() { return QColor(0xff, 0xd6, 0x0a); }  // system yellow
