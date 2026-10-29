@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     QApplication qapp(argc, argv);
     QApplication::setApplicationName("Upgrade Aim");
     QApplication::setOrganizationName("Upgrade Aim");
-    QApplication::setApplicationVersion("0.1.1");
+    QApplication::setApplicationVersion("0.1.2");
     qapp.setStyle("Fusion");
     qapp.setPalette(ui::palette());
     qapp.setFont(QFont(ui::fontFamily(), 10));
