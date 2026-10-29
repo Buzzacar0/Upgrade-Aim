@@ -133,7 +133,7 @@ private:
     void applySettingsToEngineConfig();
     void restartIfRunning();
     void shutdownEngine();  // stops the engine without touching HidHide
-    void syncHidHide();
+    void setControllerHidden(bool hidden);
     void measureSmoothingLag(const sa::CompiledProfile& cp);
     void resetResponseWindow();
 
@@ -147,7 +147,9 @@ private:
     OutputKind output_ = OutputKind::Preview;
     sa::EngineConfig engineCfg_;
     std::unique_ptr<sa::Engine> engine_;
-    bool hidHidden_ = false;  // this app hid the physical controller with HidHide
+    // This app hid the physical controller with HidHide (automatically or with
+    // the Settings button). Saved, so a later close still gives it back.
+    bool hidHidden_ = false;
     std::shared_ptr<sa::win::RawInputMonitor> rawInput_;
     std::vector<sa::KnownDevice> deviceDb_;
     QString matchedName_;

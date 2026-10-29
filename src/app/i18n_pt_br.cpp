@@ -748,6 +748,7 @@ const std::pair<const char*, const char*> kPtBr[] = {
     {"Turn on the virtual controller in Settings.", "Ligue o controle virtual em Configurações."},
     {"Allow the virtual controller in Settings so the game gets the Upgrade Aim aim.", "Permita o controle virtual em Configurações para o jogo receber a mira do Upgrade Aim."},
     {"Installed · open now", "Instalado · aberto agora"},
+    {"This code was not made by the code generator of this version of the app.", "Este código não foi feito pelo gerador de códigos desta versão do app."},
 };
 
 const std::size_t kPtBrCount = sizeof(kPtBr) / sizeof(kPtBr[0]);

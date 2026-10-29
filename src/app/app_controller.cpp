@@ -85,6 +85,7 @@ std::vector<sa::RawSample> demoSignal() {
 
 AppController::AppController(QObject* parent) : QObject(parent) {
     loadSettings();
+    hidHidden_ = settings_.value("hidhide_hidden", false);
     applySettingsToEngineConfig();
     deviceDb_ = sa::loadDeviceDatabase(sa::win::findDataDir("devices", STICKYAIM_SOURCE_DIR));
     rawInput_ = std::make_shared<sa::win::RawInputMonitor>();
@@ -342,14 +343,14 @@ bool AppController::startEngine(QString* error) {
     if (!engine_->start(err)) {
         engine_.reset();
         if (output_ == OutputKind::ViGEm) output_ = OutputKind::Preview;
-        syncHidHide();
+        setControllerHidden(false);
         if (error) *error = q(err);
         Q_EMIT statusMessage(T("Engine failed to start: ") + q(err));
         Q_EMIT engineStateChanged();
         return false;
     }
 
-    syncHidHide();
+    if (output_ == OutputKind::ViGEm) setControllerHidden(true);
     resetLatencyStats();
     recent_.clear();
     haveSeq_ = false;
@@ -369,9 +370,11 @@ bool AppController::startEngine(QString* error) {
     return true;
 }
 
+// Stopping (the Stop button, closing the app, a locked licence) always gives
+// the controller back to games, however it was hidden.
 void AppController::stopEngine() {
     shutdownEngine();
-    syncHidHide();
+    setControllerHidden(false);
 }
 
 void AppController::shutdownEngine() {
@@ -384,15 +387,12 @@ void AppController::shutdownEngine() {
 }
 
 // The physical controller is hidden from games while the virtual controller
-// runs and shown again otherwise. Each change asks Windows for administrator
-// rights, so it only runs when the wanted state differs from the current one.
-void AppController::syncHidHide() {
-    const bool want = engine_ && output_ == OutputKind::ViGEm;
-    if (want == hidHidden_) return;
+// runs and shown again when it stops. Each change asks Windows for
+// administrator rights, so it only runs when the state actually changes.
+void AppController::setControllerHidden(bool hidden) {
+    if (hidden == hidHidden_) return;
     bool ok = false;
-    const QString msg = setupHidHide(!want, &ok);
-    if (ok) hidHidden_ = want;
-    Q_EMIT statusMessage(msg);
+    Q_EMIT statusMessage(setupHidHide(!hidden, &ok));
 }
 
 void AppController::restartIfRunning() {
@@ -423,6 +423,7 @@ bool AppController::setOutput(OutputKind kind, QString* error) {
             return false;
         }
     }
+    if (kind == OutputKind::Preview) setControllerHidden(false);
     Q_EMIT engineStateChanged();
     return true;
 }
@@ -483,6 +484,9 @@ QString AppController::setupHidHide(bool undo, bool* ok) {
     if (code == 3) return T("No physical controller found to hide. Connect it and select it as the input source on the Dashboard.");
     if (code != 0) return T("HidHide setup was cancelled or failed.");
     *ok = true;
+    hidHidden_ = !undo;
+    settings_["hidhide_hidden"] = hidHidden_;
+    saveSettings();
     refreshDeviceMatch();
     return undo ? T("Done: the controller is visible to games again.") : T("Done: games now see only the virtual controller. If a game was open, restart it.");
 }

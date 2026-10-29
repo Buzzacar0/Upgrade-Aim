@@ -64,10 +64,13 @@ Source: "{#Stage}\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 Source: "{#Redist}\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 Source: "{#Redist}\ViGEmBus_1.22.0_x64_x86_arm64.exe"; DestDir: "{app}\drivers"; Flags: ignoreversion
 Source: "{#Redist}\HidHide_1.5.230_x64.exe"; DestDir: "{app}\drivers"; Flags: ignoreversion
+; Shortcuts take their icon from this file: a path Windows never cached, so an
+; update over an older version cannot keep showing the old icon.
+Source: "..\src\app\resources\app.ico"; DestDir: "{app}"; DestName: "UpgradeAim.ico"; Flags: ignoreversion
 
 [Icons]
-Name: "{autoprograms}\Upgrade Aim"; Filename: "{app}\bin\UpgradeAim.exe"
-Name: "{autodesktop}\Upgrade Aim"; Filename: "{app}\bin\UpgradeAim.exe"; Tasks: desktopicon
+Name: "{autoprograms}\Upgrade Aim"; Filename: "{app}\bin\UpgradeAim.exe"; IconFilename: "{app}\UpgradeAim.ico"
+Name: "{autodesktop}\Upgrade Aim"; Filename: "{app}\bin\UpgradeAim.exe"; IconFilename: "{app}\UpgradeAim.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{tmp}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "{cm:RunRuntime}"; Flags: waituntilterminated

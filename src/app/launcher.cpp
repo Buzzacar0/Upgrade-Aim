@@ -15,6 +15,7 @@
 #include <QPainterPath>
 #include <QPushButton>
 #include <QRandomGenerator>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -33,6 +34,23 @@ constexpr double kImageOpacity = 0.5;
 // Launcher text is shown in the language being chosen, so it is kept here
 // rather than in the T() table.
 QString L(i18n::Lang lang, const char* pt, const char* en) { return QString::fromUtf8(lang == i18n::Lang::En ? en : pt); }
+
+// Every code is "UA1-" plus 25 groups of 5 characters and one of 3. What gets
+// pasted may carry more (the "Expira em" line, a chat message, a second paste)
+// or miss the "UA1-" start, so the field looks for that shape in the text.
+QStringList codeCandidates(const QString& pasted) {
+    QString text = pasted.toUpper();
+    text.remove(QRegularExpression("\\s"));
+    QStringList out;
+    static const QRegularExpression full("UA1(?:-[0-9A-Z]{5}){25}-[0-9A-Z]{3}");
+    for (auto it = full.globalMatch(text); it.hasNext();) out << it.next().captured(0);
+    static const QRegularExpression bare("(?:[0-9A-Z]{5}-){25}[0-9A-Z]{3}");
+    for (auto it = bare.globalMatch(text); it.hasNext();) {
+        const QString code = "UA1-" + it.next().captured(0);
+        if (!out.contains(code)) out << code;
+    }
+    return out;
+}
 
 }  // namespace
 
@@ -176,12 +194,26 @@ Launcher::Launcher(QWidget* parent) : QDialog(parent), lang_(savedLanguage()) {
 }
 
 void Launcher::activate() {
-    const std::string code = code_->text().trimmed().toStdString();
-    const auto info = sa::win::license::evaluate(code);
+    const QStringList candidates = codeCandidates(code_->text());
+    std::string code = code_->text().trimmed().toStdString();
+    auto info = sa::win::license::evaluate(code);
+    for (const QString& c : candidates) {
+        if (info.valid) break;
+        const auto tried = sa::win::license::evaluate(c.toStdString());
+        if (tried.valid || c == candidates.first()) {
+            code = c.toStdString();
+            info = tried;
+        }
+    }
     if (!info.valid) {
-        activationError_->setText(lang_ == i18n::Lang::En ? QString::fromStdString(info.error) : T(info.error.c_str()));
+        if (candidates.isEmpty())
+            activationError_->setText(L(lang_, "O código está incompleto. No gerador, clique em \"Copiar\" e cole aqui de novo.",
+                                        "The code is incomplete. In the generator, click \"Copy\" and paste it here again."));
+        else
+            activationError_->setText(lang_ == i18n::Lang::En ? QString::fromStdString(info.error) : T(info.error.c_str()));
         return;
     }
+    code_->setText(QString::fromStdString(code));
     std::string err;
     if (!sa::win::license::saveLicense(code, &err)) {
         activationError_->setText(QString::fromStdString(err));

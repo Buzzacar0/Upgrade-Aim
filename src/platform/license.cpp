@@ -239,7 +239,7 @@ Info verify(const std::string& code, const std::vector<std::uint8_t>& publicKey,
     BCryptDestroyKey(key);
     BCryptCloseAlgorithmProvider(alg, 0);
     if (st != 0) {
-        info.error = "This is not a valid activation code.";
+        info.error = "This code was not made by the code generator of this version of the app.";
         return info;
     }
     const auto& b = *bytes;
