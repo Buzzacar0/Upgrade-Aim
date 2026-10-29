@@ -85,7 +85,7 @@ std::vector<sa::RawSample> demoSignal() {
 
 AppController::AppController(QObject* parent) : QObject(parent) {
     loadSettings();
-    hidHidden_ = settings_.value("hidhide_hidden", false);
+    if (settings_.contains("hidhide_hidden")) hidHidden_ = settings_["hidhide_hidden"].get<bool>();
     applySettingsToEngineConfig();
     deviceDb_ = sa::loadDeviceDatabase(sa::win::findDataDir("devices", STICKYAIM_SOURCE_DIR));
     rawInput_ = std::make_shared<sa::win::RawInputMonitor>();
@@ -389,8 +389,13 @@ void AppController::shutdownEngine() {
 // The physical controller is hidden from games while the virtual controller
 // runs and shown again when it stops. Each change asks Windows for
 // administrator rights, so it only runs when the state actually changes.
+// HidHide only answers an elevated process, so the app cannot ask it whether
+// the controller is hidden. Until a change is recorded (a new install, or a
+// controller hidden by an older version) the state is unknown and the app
+// acts anyway, so closing it always gives the controller back.
 void AppController::setControllerHidden(bool hidden) {
-    if (hidden == hidHidden_) return;
+    if (hidHidden_ && *hidHidden_ == hidden) return;
+    if (!sa::win::hidhide::installed()) return;
     bool ok = false;
     Q_EMIT statusMessage(setupHidHide(!hidden, &ok));
 }
@@ -464,6 +469,11 @@ QString AppController::setupHidHide(bool undo, bool* ok) {
         pid = d.productId;
         if (sa::matchDevice(deviceDb_, vid, pid)) break;  // prefer a known controller
     }
+    // Giving back a controller that is unplugged now: use the one hidden last.
+    if (!vid && undo) {
+        vid = settings_.value("hidhide_vid", 0);
+        pid = settings_.value("hidhide_pid", 0);
+    }
     if (!vid) return T("No physical controller found to hide. Connect it and select it as the input source on the Dashboard.");
 
     const std::wstring exe = QCoreApplication::applicationFilePath().replace('/', '\\').toStdWString();
@@ -485,7 +495,11 @@ QString AppController::setupHidHide(bool undo, bool* ok) {
     if (code != 0) return T("HidHide setup was cancelled or failed.");
     *ok = true;
     hidHidden_ = !undo;
-    settings_["hidhide_hidden"] = hidHidden_;
+    settings_["hidhide_hidden"] = !undo;
+    if (!undo) {
+        settings_["hidhide_vid"] = vid;
+        settings_["hidhide_pid"] = pid;
+    }
     saveSettings();
     refreshDeviceMatch();
     return undo ? T("Done: the controller is visible to games again.") : T("Done: games now see only the virtual controller. If a game was open, restart it.");

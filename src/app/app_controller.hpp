@@ -7,6 +7,7 @@
 
 #include <deque>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include <nlohmann/json.hpp>
@@ -149,7 +150,8 @@ private:
     std::unique_ptr<sa::Engine> engine_;
     // This app hid the physical controller with HidHide (automatically or with
     // the Settings button). Saved, so a later close still gives it back.
-    bool hidHidden_ = false;
+    // Empty = unknown (nothing recorded yet).
+    std::optional<bool> hidHidden_;
     std::shared_ptr<sa::win::RawInputMonitor> rawInput_;
     std::vector<sa::KnownDevice> deviceDb_;
     QString matchedName_;
